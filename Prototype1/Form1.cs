@@ -81,7 +81,13 @@ namespace Prototype1
             // 차단 활성화 상태일 때만 작동합니다.
             if (DataModel.IsBlockingActive)
             {
-                KillProcesses(DataModel.SavedBlockList);
+                List<string> finalBlockList = new List<string>(DataModel.SavedBlockList); // savedBlockList 복사
+
+                if (!finalBlockList.Contains("taskmgr")) // List 요소 중복을 피하기 위해 포함유무 검사
+                {
+                    finalBlockList.Add("taskmgr"); // Default로 on session이면 작업관리자 항상 차단 (cmd, powershell??)
+                }
+                KillProcesses(finalBlockList);
             }
         }
 
@@ -105,7 +111,15 @@ namespace Prototype1
 
         private void Prototype1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            DataModel.SaveToJson();
+            if (DataModel.IsBlockingActive)
+            {
+                e.Cancel = true;
+                MessageBox.Show("시각적 손실 유발!");
+            }
+            else
+            {
+                DataModel.SaveToJson();
+            }
         }
     }
 }
