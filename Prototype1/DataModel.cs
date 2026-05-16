@@ -23,6 +23,9 @@ namespace Prototype1
         // 마지막으로 리셋된 날짜보다 오늘의 날짜가 더 크다면 자정(00시) 라인을 통과한 것 -> 해당 로직을 통해 자정이 지나서 프로그램이 실행되었으면 Life를 3으로 초기화 구현
         public static DateTime LastResetTime { get; set; } = DateTime.MinValue;
 
+        // 집중 종료 시각 (JSON 저장 X)
+        public static DateTime FocusEndTime = DateTime.MinValue;
+
         // JSON 파일 저장 경로: Prototype1 -> bin -> Debug
         private static readonly string FilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
 

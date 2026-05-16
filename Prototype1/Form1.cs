@@ -7,7 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Diagnostics; // 프로세스 제어를 위한 필수 네임스페이스
+using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
 
 namespace Prototype1
 {
@@ -65,6 +66,26 @@ namespace Prototype1
 
         private void btnActivateBlocking_Click(object sender, EventArgs e)
         {
+            string hourInput = cmbHour.Text;
+            string minInput = cmbMin.Text; // 사용자의 입력(콤보박스)를 읽는다
+
+            int hours = 0;
+            int minutes = 0;
+
+            if (!string.IsNullOrEmpty(hourInput) && !int.TryParse(hourInput, out hours)) // 사용자가 숫자가 아닌 값을 입력했을때 함수 종료
+            {
+                MessageBox.Show(" 시간에 올바른 숫자를 입력해 주세요 !");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(minInput) && !int.TryParse(minInput, out minutes))
+            {
+                MessageBox.Show(" 분에 올바른 숫자를 입력해 주세요 !");
+                return;
+            }
+            int totalMinutes = (hours * 60) + minutes;
+            DataModel.FocusEndTime = DateTime.Now.AddMinutes(totalMinutes);
+
             // 전역 상태를 ON으로 변경
             DataModel.IsBlockingActive = true;
             // 2. 타이머가 중지 상태라면 시작시킵니다.
@@ -81,13 +102,26 @@ namespace Prototype1
             // 차단 활성화 상태일 때만 작동합니다.
             if (DataModel.IsBlockingActive)
             {
-                List<string> finalBlockList = new List<string>(DataModel.SavedBlockList); // savedBlockList 복사
-
-                if (!finalBlockList.Contains("taskmgr")) // List 요소 중복을 피하기 위해 포함유무 검사
+                if (DateTime.Now >= DataModel.FocusEndTime) // 세션 종료 시간 도달
                 {
-                    finalBlockList.Add("taskmgr"); // Default로 on session이면 작업관리자 항상 차단 (cmd, powershell??)
+                    blockingtimer.Stop();
+                    DataModel.IsBlockingActive = false;
+                    DataModel.SaveToJson();
+
+                    MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
                 }
-                KillProcesses(finalBlockList);
+                else // 아직 세션 종료 시간에 도달하지 못한 경우
+                {
+                    TimeSpan timeLeft = DataModel.FocusEndTime - DateTime.Now; // 남은시간 실시간으로 계산해서 사용자에 Display
+                    lblShowTimeLeft.Text = string.Format("{0}시간 {1:D2}분 {2:D2}초", timeLeft.Hours, timeLeft.Minutes, timeLeft.Seconds);
+                    List<string> finalBlockList = new List<string>(DataModel.SavedBlockList); // savedBlockList 복사
+
+                    if (!finalBlockList.Contains("taskmgr")) // List 요소 중복을 피하기 위해 포함유무 검사
+                    {
+                        finalBlockList.Add("taskmgr"); // Default로 on session이면 작업관리자 항상 차단 (cmd, powershell??)
+                    }
+                    KillProcesses(finalBlockList);
+                }
             }
         }
 
@@ -107,6 +141,9 @@ namespace Prototype1
         private void Prototype1_Load(object sender, EventArgs e)
         {
             DataModel.LoadFromJson();
+            btnActivateBlocking.Enabled = false; // 집중모드 활성화 버튼 세션시간 입력하기 전까지 사용 불가
+            cmbHour.TextChanged += ComboBox_TextChanged;
+            cmbMin.TextChanged += ComboBox_TextChanged;
         }
 
         private void Prototype1_FormClosing(object sender, FormClosingEventArgs e)
@@ -120,6 +157,13 @@ namespace Prototype1
             {
                 DataModel.SaveToJson();
             }
+        }
+
+        private void ComboBox_TextChanged(object sender, EventArgs e)
+        {
+            bool hasHour = !string.IsNullOrWhiteSpace(cmbHour.Text);
+            bool hasMin = !string.IsNullOrWhiteSpace(cmbMin.Text);
+            btnActivateBlocking.Enabled = hasHour && hasMin;
         }
     }
 }
