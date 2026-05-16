@@ -97,5 +97,15 @@ namespace Prototype1
             }
             MessageBox.Show("차단이 종료되었습니다 !");
         }
+
+        private void Prototype1_Load(object sender, EventArgs e)
+        {
+            DataModel.LoadFromJson();
+        }
+
+        private void Prototype1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            DataModel.SaveToJson();
+        }
     }
 }

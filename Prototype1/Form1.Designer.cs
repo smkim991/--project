@@ -92,6 +92,8 @@
             this.Controls.Add(this.btnBlockList);
             this.Name = "Prototype1";
             this.Text = "Prototype1";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Prototype1_FormClosing);
+            this.Load += new System.EventHandler(this.Prototype1_Load);
             this.ResumeLayout(false);
 
         }
