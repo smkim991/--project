@@ -41,13 +41,16 @@
             this.cmbMin = new System.Windows.Forms.ComboBox();
             this.lblShowTimeLeft = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
+            this.labelProfile = new System.Windows.Forms.Label();
+            this.cmbFocusProfile = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // btnBlockList
             // 
-            this.btnBlockList.Location = new System.Drawing.Point(505, 290);
+            this.btnBlockList.Location = new System.Drawing.Point(272, 145);
+            this.btnBlockList.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnBlockList.Name = "btnBlockList";
-            this.btnBlockList.Size = new System.Drawing.Size(192, 132);
+            this.btnBlockList.Size = new System.Drawing.Size(103, 66);
             this.btnBlockList.TabIndex = 1;
             this.btnBlockList.Text = "차단목록관리";
             this.btnBlockList.UseVisualStyleBackColor = true;
@@ -55,9 +58,10 @@
             // 
             // btnExit
             // 
-            this.btnExit.Location = new System.Drawing.Point(505, 444);
+            this.btnExit.Location = new System.Drawing.Point(272, 222);
+            this.btnExit.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new System.Drawing.Size(192, 71);
+            this.btnExit.Size = new System.Drawing.Size(103, 36);
             this.btnExit.TabIndex = 2;
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = true;
@@ -65,9 +69,10 @@
             // 
             // btnActivateBlocking
             // 
-            this.btnActivateBlocking.Location = new System.Drawing.Point(30, 383);
+            this.btnActivateBlocking.Location = new System.Drawing.Point(16, 192);
+            this.btnActivateBlocking.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnActivateBlocking.Name = "btnActivateBlocking";
-            this.btnActivateBlocking.Size = new System.Drawing.Size(426, 132);
+            this.btnActivateBlocking.Size = new System.Drawing.Size(229, 66);
             this.btnActivateBlocking.TabIndex = 3;
             this.btnActivateBlocking.Text = "집중모드 활성화";
             this.btnActivateBlocking.UseVisualStyleBackColor = true;
@@ -75,9 +80,10 @@
             // 
             // btnStopBlocking
             // 
-            this.btnStopBlocking.Location = new System.Drawing.Point(533, 165);
+            this.btnStopBlocking.Location = new System.Drawing.Point(272, 82);
+            this.btnStopBlocking.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnStopBlocking.Name = "btnStopBlocking";
-            this.btnStopBlocking.Size = new System.Drawing.Size(164, 103);
+            this.btnStopBlocking.Size = new System.Drawing.Size(103, 52);
             this.btnStopBlocking.TabIndex = 4;
             this.btnStopBlocking.Text = "집중모드 정지";
             this.btnStopBlocking.UseVisualStyleBackColor = true;
@@ -91,27 +97,30 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 257);
+            this.label1.Location = new System.Drawing.Point(6, 128);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(130, 24);
+            this.label1.Size = new System.Drawing.Size(65, 12);
             this.label1.TabIndex = 5;
             this.label1.Text = "세션 시간: ";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(248, 257);
+            this.label2.Location = new System.Drawing.Point(134, 128);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(58, 24);
+            this.label2.Size = new System.Drawing.Size(29, 12);
             this.label2.TabIndex = 6;
             this.label2.Text = "시간";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(422, 257);
+            this.label3.Location = new System.Drawing.Point(227, 128);
+            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(34, 24);
+            this.label3.Size = new System.Drawing.Size(17, 12);
             this.label3.TabIndex = 7;
             this.label3.Text = "분";
             // 
@@ -124,9 +133,10 @@
             "2",
             "3",
             "4"});
-            this.cmbHour.Location = new System.Drawing.Point(148, 254);
+            this.cmbHour.Location = new System.Drawing.Point(80, 127);
+            this.cmbHour.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.cmbHour.Name = "cmbHour";
-            this.cmbHour.Size = new System.Drawing.Size(79, 32);
+            this.cmbHour.Size = new System.Drawing.Size(44, 20);
             this.cmbHour.TabIndex = 8;
             // 
             // cmbMin
@@ -138,35 +148,60 @@
             "30",
             "40",
             "50"});
-            this.cmbMin.Location = new System.Drawing.Point(312, 254);
+            this.cmbMin.Location = new System.Drawing.Point(168, 127);
+            this.cmbMin.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.cmbMin.Name = "cmbMin";
-            this.cmbMin.Size = new System.Drawing.Size(79, 32);
+            this.cmbMin.Size = new System.Drawing.Size(44, 20);
             this.cmbMin.TabIndex = 9;
             // 
             // lblShowTimeLeft
             // 
             this.lblShowTimeLeft.AutoSize = true;
             this.lblShowTimeLeft.Font = new System.Drawing.Font("굴림", 22F);
-            this.lblShowTimeLeft.Location = new System.Drawing.Point(99, 85);
+            this.lblShowTimeLeft.Location = new System.Drawing.Point(53, 42);
+            this.lblShowTimeLeft.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblShowTimeLeft.Name = "lblShowTimeLeft";
-            this.lblShowTimeLeft.Size = new System.Drawing.Size(505, 59);
+            this.lblShowTimeLeft.Size = new System.Drawing.Size(255, 30);
             this.lblShowTimeLeft.TabIndex = 10;
             this.lblShowTimeLeft.Text = "00시간 00분 00초";
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 20);
+            this.label4.Location = new System.Drawing.Point(6, 10);
+            this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(714, 24);
+            this.label4.Size = new System.Drawing.Size(357, 12);
             this.label4.TabIndex = 11;
             this.label4.Text = "집중모드 정지버튼은 개발 편의성을 위해서 일단 남겨두겠습니다.";
             // 
+            // labelProfile
+            // 
+            this.labelProfile.AutoSize = true;
+            this.labelProfile.Location = new System.Drawing.Point(6, 98);
+            this.labelProfile.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelProfile.Name = "labelProfile";
+            this.labelProfile.Size = new System.Drawing.Size(65, 12);
+            this.labelProfile.TabIndex = 12;
+            this.labelProfile.Text = "설정 방식: ";
+            // 
+            // cmbFocusProfile
+            // 
+            this.cmbFocusProfile.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbFocusProfile.FormattingEnabled = true;
+            this.cmbFocusProfile.Location = new System.Drawing.Point(80, 95);
+            this.cmbFocusProfile.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cmbFocusProfile.Name = "cmbFocusProfile";
+            this.cmbFocusProfile.Size = new System.Drawing.Size(165, 20);
+            this.cmbFocusProfile.TabIndex = 13;
+            // 
             // Prototype1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 24F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(722, 539);
+            this.ClientSize = new System.Drawing.Size(389, 270);
+            this.Controls.Add(this.cmbFocusProfile);
+            this.Controls.Add(this.labelProfile);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.lblShowTimeLeft);
             this.Controls.Add(this.cmbMin);
@@ -178,6 +213,7 @@
             this.Controls.Add(this.btnActivateBlocking);
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.btnBlockList);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "Prototype1";
             this.Text = "Prototype1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Prototype1_FormClosing);
@@ -200,6 +236,8 @@
         private System.Windows.Forms.ComboBox cmbMin;
         private System.Windows.Forms.Label lblShowTimeLeft;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label labelProfile;
+        private System.Windows.Forms.ComboBox cmbFocusProfile;
     }
 }
 

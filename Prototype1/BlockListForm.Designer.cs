@@ -38,6 +38,8 @@
             this.btnBlockListSave = new System.Windows.Forms.Button();
             this.btnUserSpecified = new System.Windows.Forms.Button();
             this.btnClosingBlockListForm = new System.Windows.Forms.Button();
+            this.lblProcessInput = new System.Windows.Forms.Label();
+            this.txtProcessName = new System.Windows.Forms.TextBox();
             this.CurrentBlockList.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -132,11 +134,29 @@
             this.btnClosingBlockListForm.UseVisualStyleBackColor = true;
             this.btnClosingBlockListForm.Click += new System.EventHandler(this.btnClosingBlockListForm_Click);
             // 
+            // lblProcessInput
+            // 
+            this.lblProcessInput.AutoSize = true;
+            this.lblProcessInput.Location = new System.Drawing.Point(82, 731);
+            this.lblProcessInput.Name = "lblProcessInput";
+            this.lblProcessInput.Size = new System.Drawing.Size(238, 24);
+            this.lblProcessInput.TabIndex = 6;
+            this.lblProcessInput.Text = "프로세스명 직접 입력";
+            // 
+            // txtProcessName
+            // 
+            this.txtProcessName.Location = new System.Drawing.Point(326, 728);
+            this.txtProcessName.Name = "txtProcessName";
+            this.txtProcessName.Size = new System.Drawing.Size(364, 35);
+            this.txtProcessName.TabIndex = 7;
+            // 
             // BlockListForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(785, 933);
+            this.Controls.Add(this.txtProcessName);
+            this.Controls.Add(this.lblProcessInput);
             this.Controls.Add(this.btnClosingBlockListForm);
             this.Controls.Add(this.btnUserSpecified);
             this.Controls.Add(this.btnBlockListSave);
@@ -164,5 +184,7 @@
         private System.Windows.Forms.Button btnBlockListSave;
         private System.Windows.Forms.Button btnUserSpecified;
         private System.Windows.Forms.Button btnClosingBlockListForm;
+        private System.Windows.Forms.Label lblProcessInput;
+        private System.Windows.Forms.TextBox txtProcessName;
     }
 }
