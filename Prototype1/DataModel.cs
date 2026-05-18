@@ -94,12 +94,11 @@ namespace Prototype1
                 return false;
             }
 
-            DateTime lockUntil = FocusEndTime > DateTime.Now ? FocusEndTime : DateTime.Now;
             IsBlockingActive = false;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
-            EmergencyLockUntil = lockUntil > EmergencyLockUntil ? lockUntil : EmergencyLockUntil;
+            EmergencyLockUntil = Life == 0 ? TodayMidnight : EmergencyLockUntil;
             SaveToJson();
             return true;
         }
@@ -226,7 +225,7 @@ namespace Prototype1
 
         private static void ApplyLifeExhaustionLock()
         {
-            if (Life == 0 && !IsEmergencyLockedOut)
+            if (Life == 0 && EmergencyLockUntil < TodayMidnight)
             {
                 EmergencyLockUntil = TodayMidnight;
                 SaveToJson();

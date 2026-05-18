@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
 
 namespace Prototype1
 {
@@ -395,8 +396,6 @@ namespace Prototype1
                 return;
             }
 
-            DateTime lockUntil = DataModel.FocusEndTime;
-
             if (!DataModel.EmergencyStopFocusSession())
             {
                 MessageBox.Show("남은 라이프가 없습니다.");
@@ -410,7 +409,7 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
-            MessageBox.Show($"긴급 종료되었습니다. {lockUntil:HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
+            MessageBox.Show($"긴급 종료되었습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
         }
 
         private void ComboBox_TextChanged(object sender, EventArgs e)
@@ -460,7 +459,7 @@ namespace Prototype1
 
             bool hasHour = !string.IsNullOrWhiteSpace(cmbHour.Text);
             bool hasMin = !string.IsNullOrWhiteSpace(cmbMin.Text);
-            btnActivateBlocking.Enabled = hasHour && hasMin;
+            btnActivateBlocking.Enabled = hasHour && hasMin && !DataModel.IsEmergencyLockedOut;
         }
     }
 }
