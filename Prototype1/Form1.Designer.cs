@@ -79,7 +79,7 @@
             this.btnStopBlocking.Name = "btnStopBlocking";
             this.btnStopBlocking.Size = new System.Drawing.Size(164, 103);
             this.btnStopBlocking.TabIndex = 4;
-            this.btnStopBlocking.Text = "집중모드 정지";
+            this.btnStopBlocking.Text = "집중모드 정지(개발용)";
             this.btnStopBlocking.UseVisualStyleBackColor = true;
             this.btnStopBlocking.Click += new System.EventHandler(this.btnStopBlocking_Click);
             // 
