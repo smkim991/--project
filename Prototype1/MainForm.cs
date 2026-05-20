@@ -22,16 +22,12 @@ namespace Prototype1
         public MainForm()
         {
             InitializeComponent();
-            InitializeDefaultBlockedItems();
+            LoadBlockProfiles();
         }
 
-        private void InitializeDefaultBlockedItems()
+        private void LoadBlockProfiles()
         {
-            currentBlockedItems = new Dictionary<string, List<string>>();
-            currentBlockedItems.Add("대학생", new List<string> { "넷플릭스", "네이버웹툰" });
-            currentBlockedItems.Add("개발자", new List<string> { "유튜브", "메모장", "멜론" });
-            currentBlockedItems.Add("영상편집자", new List<string> { "인스타그램", "엑셀" });
-            currentBlockedItems.Add("수험생", new List<string> { "카카오톡", "인스타그램", "틱톡" });
+            currentBlockedItems = DataModel.GetBlockProfilesCopy();
         }
 
         public void KillProcesses(List<string> blockList)
@@ -92,6 +88,7 @@ namespace Prototype1
                 if (manageBlockedAppsForm.ShowDialog(this) == DialogResult.OK)
                 {
                     currentBlockedItems = manageBlockedAppsForm.GetUpdatedBlockedItems();
+                    DataModel.UpdateBlockProfiles(currentBlockedItems);
                 }
             }
         }
@@ -254,6 +251,7 @@ namespace Prototype1
         private void MainForm_Load(object sender, EventArgs e)
         {
             DataModel.LoadFromJson();
+            LoadBlockProfiles();
             btnActivateBlocking.Enabled = false;
             btnStopBlocking.Text = "집중모드 정지(개발용)";
             cmbHour.TextChanged += ComboBox_TextChanged;

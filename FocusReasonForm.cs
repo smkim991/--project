@@ -19,16 +19,16 @@ namespace Prototype1.UI
 
         public string EnteredMessage
         {
-            get { return label1.Text; }
+            get { return txtMessageInput.Text; }
         }
 
         public string InitialMessage
         {
-            set { label1.Text = value; }
+            set { txtMessageInput.Text = value; }
         }
         private void FocusReasonForm_Load(object sender, EventArgs e)
         {
-            label1.Focus();
+            txtMessageInput.Focus();
         }
     }
 }

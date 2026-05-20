@@ -77,14 +77,8 @@ namespace Prototype1.UI
 
         private void SaveSelectedCategoryAsActiveBlockList()
         {
-            DataModel.SavedBlockList.Clear();
-
-            if (currentBlockedItems.TryGetValue(currentSelectedCategory, out List<string> blockedItems))
-            {
-                DataModel.SavedBlockList.AddRange(blockedItems);
-            }
-
-            DataModel.SaveToJson();
+            DataModel.UpdateBlockProfiles(currentBlockedItems);
+            DataModel.SetActiveBlockListForCategory(currentSelectedCategory);
         }
 
         private void ResetCategorySelectionUI()
