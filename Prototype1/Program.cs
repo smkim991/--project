@@ -16,7 +16,7 @@ namespace Prototype1
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Prototype1());
+            Application.Run(new MainForm());
         }
     }
 }
