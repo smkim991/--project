@@ -4,10 +4,11 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
+using Prototype1.UI;
 
 namespace Prototype1
 {
-    public partial class Prototype1 : Form
+    public partial class MainForm : Form
     {
         private enum StopRequestAction
         {
@@ -16,9 +17,17 @@ namespace Prototype1
             EmergencyStop
         }
 
-        public Prototype1()
+        private Dictionary<string, List<string>> currentBlockedItems;
+
+        public MainForm()
         {
             InitializeComponent();
+            LoadBlockProfiles();
+        }
+
+        private void LoadBlockProfiles()
+        {
+            currentBlockedItems = DataModel.GetBlockProfilesCopy();
         }
 
         public void KillProcesses(List<string> blockList)
@@ -64,10 +73,32 @@ namespace Prototype1
             }
         }
 
-        private void btnBlockList_Click(object sender, EventArgs e)
+        private void btnCategorySettings_Click(object sender, EventArgs e)
         {
-            BlockListForm subForm = new BlockListForm();
-            subForm.ShowDialog();
+            using (CategorySettingsForm categorySettingsForm = new CategorySettingsForm(currentBlockedItems))
+            {
+                categorySettingsForm.ShowDialog(this);
+            }
+        }
+
+        private void btnManageBlockedApps_Click(object sender, EventArgs e)
+        {
+            using (BlockedAppsManagementForm manageBlockedAppsForm = new BlockedAppsManagementForm(currentBlockedItems))
+            {
+                if (manageBlockedAppsForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    currentBlockedItems = manageBlockedAppsForm.GetUpdatedBlockedItems();
+                    DataModel.UpdateBlockProfiles(currentBlockedItems);
+                }
+            }
+        }
+
+        private void btnStudyPlan_Click(object sender, EventArgs e)
+        {
+            using (StudyPlanForm studyPlanForm = new StudyPlanForm())
+            {
+                studyPlanForm.ShowDialog(this);
+            }
         }
 
         private void btnActivateBlocking_Click(object sender, EventArgs e)
@@ -217,9 +248,10 @@ namespace Prototype1
             MessageBox.Show("개발용 정지 버튼으로 차단이 종료되었습니다!");
         }
 
-        private void Prototype1_Load(object sender, EventArgs e)
+        private void MainForm_Load(object sender, EventArgs e)
         {
             DataModel.LoadFromJson();
+            LoadBlockProfiles();
             btnActivateBlocking.Enabled = false;
             btnStopBlocking.Text = "집중모드 정지(개발용)";
             cmbHour.TextChanged += ComboBox_TextChanged;
@@ -227,7 +259,7 @@ namespace Prototype1
             UpdateBlockingUi();
         }
 
-        private void Prototype1_FormClosing(object sender, FormClosingEventArgs e)
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (DataModel.IsBlockingActive)
             {

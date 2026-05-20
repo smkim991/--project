@@ -14,6 +14,9 @@ namespace Prototype1
         // 차단할 프로세스 명칭을 저장하는 전역 리스트
         public static List<string> SavedBlockList { get; set; } = new List<string>();
 
+        // 카테고리별 차단 항목 목록
+        public static Dictionary<string, List<string>> BlockProfiles { get; set; } = CreateDefaultBlockProfiles();
+
         // 현재 차단 기능이 활성화(ON) 상태인지 확인하는 변수
         public static bool IsBlockingActive { get; set; } = false;
 
@@ -47,6 +50,40 @@ namespace Prototype1
 
         // JSON 파일 저장 경로: Prototype1 -> bin -> Debug
         private static readonly string FilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+
+        public static Dictionary<string, List<string>> CreateDefaultBlockProfiles()
+        {
+            return new Dictionary<string, List<string>>
+            {
+                { "대학생", new List<string> { "넷플릭스", "네이버웹툰" } },
+                { "개발자", new List<string> { "유튜브", "메모장", "멜론" } },
+                { "영상편집자", new List<string> { "인스타그램", "엑셀" } },
+                { "수험생", new List<string> { "카카오톡", "인스타그램", "틱톡" } }
+            };
+        }
+
+        public static Dictionary<string, List<string>> GetBlockProfilesCopy()
+        {
+            return CloneBlockProfiles(BlockProfiles);
+        }
+
+        public static void UpdateBlockProfiles(Dictionary<string, List<string>> profiles)
+        {
+            BlockProfiles = CloneBlockProfiles(profiles);
+            SaveToJson();
+        }
+
+        public static void SetActiveBlockListForCategory(string categoryName)
+        {
+            SavedBlockList.Clear();
+
+            if (BlockProfiles.TryGetValue(categoryName, out List<string> blockedItems))
+            {
+                SavedBlockList.AddRange(blockedItems);
+            }
+
+            SaveToJson();
+        }
 
         public static void StartFocusSession(DateTime focusEndTime)
         {
@@ -128,6 +165,7 @@ namespace Prototype1
                 var saveData = new Dictionary<string, object>
                 {
                     { "SavedBlockList", SavedBlockList },
+                    { "BlockProfiles", BlockProfiles },
                     { "IsBlockingActive", IsBlockingActive },
                     { "IsBreakActive", IsBreakActive },
                     { "BreakEndTime", BreakEndTime },
@@ -165,6 +203,17 @@ namespace Prototype1
                 {
                     if (data.TryGetValue("SavedBlockList", out var blockListEl))
                         SavedBlockList = JsonSerializer.Deserialize<List<string>>(blockListEl.GetRawText()) ?? new List<string>();
+
+                    if (data.TryGetValue("BlockProfiles", out var blockProfilesEl))
+                    {
+                        Dictionary<string, List<string>> loadedProfiles =
+                            JsonSerializer.Deserialize<Dictionary<string, List<string>>>(blockProfilesEl.GetRawText());
+                        BlockProfiles = CloneBlockProfiles(loadedProfiles);
+                    }
+                    else
+                    {
+                        BlockProfiles = CreateDefaultBlockProfiles();
+                    }
 
                     if (data.TryGetValue("IsBlockingActive", out var activeEl))
                         IsBlockingActive = activeEl.GetBoolean();
@@ -230,6 +279,25 @@ namespace Prototype1
                 EmergencyLockUntil = TodayMidnight;
                 SaveToJson();
             }
+        }
+
+        private static Dictionary<string, List<string>> CloneBlockProfiles(Dictionary<string, List<string>> source)
+        {
+            Dictionary<string, List<string>> clone = CreateDefaultBlockProfiles();
+
+            if (source == null)
+            {
+                return clone;
+            }
+
+            foreach (KeyValuePair<string, List<string>> profile in source)
+            {
+                clone[profile.Key] = profile.Value == null
+                    ? new List<string>()
+                    : new List<string>(profile.Value);
+            }
+
+            return clone;
         }
     }
 }
