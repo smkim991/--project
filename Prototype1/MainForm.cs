@@ -47,7 +47,6 @@ namespace Prototype1
 
                         p.Kill();
                         p.WaitForExit();
-                        FocusSessionTelemetry.RegisterBlockedProcessAttempt(processName);
                         Console.WriteLine($"{processName} 차단 완료!");
                     }
                     catch (Exception ex)
@@ -186,7 +185,7 @@ namespace Prototype1
             if (DateTime.Now >= DataModel.FocusEndTime)
             {
                 blockingtimer.Stop();
-                DataModel.CompleteFocusSession("Completed");
+                DataModel.CompleteFocusSession();
                 lblShowTimeLeft.Text = "00시간 00분 00초";
                 UpdateBlockingUi();
                 ShowLastSessionReport();
@@ -204,7 +203,7 @@ namespace Prototype1
                     if (DataModel.Life == 0 && DataModel.IsEmergencyLockedOut)
                     {
                         blockingtimer.Stop();
-                        DataModel.CompleteFocusSession("Life exhausted");
+                        DataModel.CompleteFocusSession();
                         lblShowTimeLeft.Text = "00시간 00분 00초";
                         UpdateBlockingUi();
                         ShowLastSessionReport();
@@ -230,7 +229,7 @@ namespace Prototype1
             if (DataModel.Life == 0 && DataModel.IsEmergencyLockedOut)
             {
                 blockingtimer.Stop();
-                DataModel.CompleteFocusSession("Life exhausted");
+                DataModel.CompleteFocusSession();
                 lblShowTimeLeft.Text = "00시간 00분 00초";
                 UpdateBlockingUi();
                 ShowLastSessionReport();
@@ -263,7 +262,7 @@ namespace Prototype1
 
         private void btnStopBlocking_Click(object sender, EventArgs e)
         {
-            DataModel.CompleteFocusSession("Stopped manually");
+            DataModel.CompleteFocusSession();
 
             if (blockingtimer.Enabled)
             {

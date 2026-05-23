@@ -506,7 +506,7 @@ namespace Prototype1.UI
                 {
                     if (!byApp.TryGetValue(app.AppName, out AppUsageSummary summary))
                     {
-                        summary = new AppUsageSummary { AppName = app.AppName, ExecutablePath = app.ExecutablePath };
+                        summary = new AppUsageSummary { AppName = app.AppName };
                         byApp.Add(app.AppName, summary);
                     }
 
@@ -518,7 +518,7 @@ namespace Prototype1.UI
 
             return byApp.Values
                 .OrderByDescending(a => a.ActiveSeconds)
-                .ThenByDescending(a => a.TotalSeconds)
+                .ThenByDescending(a => a.ActiveSeconds + a.BreakSeconds)
                 .ToList();
         }
 
@@ -894,9 +894,6 @@ namespace Prototype1.UI
 
             DataModel.CurrentFocusGoal = draft.Goal;
             DataModel.CurrentFocusCategory = draft.Category;
-            DataModel.CurrentPlanFilePath = currentFilePath;
-            DataModel.CurrentPlanSnapshot = txtMemo.Text;
-            DataModel.CurrentPlannedMinutes = draft.DurationMinutes;
             DataModel.SetActiveBlockListForCategory(draft.Category);
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(draft.DurationMinutes));
 
@@ -1657,14 +1654,8 @@ namespace Prototype1.UI
             private void DrawLegend(Graphics g, Rectangle bounds, Font font, Brush textBrush)
             {
                 int x = Math.Max(260, bounds.Width - 200);
-                if (bounds.Width >= 0)
-                {
-                    DrawLegendItem(g, x, 10, Color.FromArgb(55, 158, 132), "활성", font, textBrush);
-                    DrawLegendItem(g, x + 78, 10, Color.FromArgb(238, 188, 84), "휴식", font, textBrush);
-                    return;
-                }
                 DrawLegendItem(g, x, 10, Color.FromArgb(55, 158, 132), "활성", font, textBrush);
-                DrawLegendItem(g, x + 150, 10, Color.FromArgb(238, 188, 84), "휴식", font, textBrush);
+                DrawLegendItem(g, x + 78, 10, Color.FromArgb(238, 188, 84), "휴식", font, textBrush);
             }
 
             private void DrawLegendItem(Graphics g, int x, int y, Color color, string text, Font font, Brush textBrush)
@@ -1728,11 +1719,7 @@ namespace Prototype1.UI
                 hitAreas.Add(Tuple.Create(sessionRect, session));
 
                 string label = session.StartedAt.ToString("HH:mm") + "-" + session.EndedAt.ToString("HH:mm") +
-                               " " + (string.IsNullOrWhiteSpace(session.Goal) ? "집중 세션" : session.Goal) +
-                               string.Empty;
-
-                label = session.StartedAt.ToString("HH:mm") + "-" + session.EndedAt.ToString("HH:mm") +
-                        " " + (string.IsNullOrWhiteSpace(session.Goal) ? "집중 세션" : session.Goal);
+                               " " + (string.IsNullOrWhiteSpace(session.Goal) ? "집중 세션" : session.Goal);
 
                 using (StringFormat format = new StringFormat())
                 {
@@ -1751,11 +1738,6 @@ namespace Prototype1.UI
 
             private Color GetSegmentColor(AppUsageSegment segment)
             {
-                if (segment.IsBlocked)
-                {
-                    return Color.FromArgb(55, 158, 132);
-                }
-
                 if (segment.State == FocusUsageState.Break)
                 {
                     return Color.FromArgb(238, 188, 84);

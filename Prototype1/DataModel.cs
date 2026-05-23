@@ -42,12 +42,6 @@ namespace Prototype1
 
         public static string CurrentFocusCategory { get; set; } = string.Empty;
 
-        public static string CurrentPlanFilePath { get; set; } = string.Empty;
-
-        public static string CurrentPlanSnapshot { get; set; } = string.Empty;
-
-        public static int CurrentPlannedMinutes { get; set; }
-
         public static bool IsEmergencyLockedOut
         {
             get { return DateTime.Now < EmergencyLockUntil; }
@@ -104,28 +98,20 @@ namespace Prototype1
             BreakEndTime = DateTime.MinValue;
             FocusSessionTelemetry.StartSession(
                 startedAt,
-                focusEndTime,
                 CurrentFocusGoal,
-                CurrentFocusCategory,
-                SavedBlockList,
-                CurrentPlanFilePath,
-                CurrentPlanSnapshot,
-                CurrentPlannedMinutes);
+                CurrentFocusCategory);
             SaveToJson();
         }
 
-        public static void CompleteFocusSession(string endReason = "Ended")
+        public static void CompleteFocusSession()
         {
-            FocusSessionTelemetry.CompleteSession(DateTime.Now, endReason);
+            FocusSessionTelemetry.CompleteSession(DateTime.Now);
             IsBlockingActive = false;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
             CurrentFocusGoal = string.Empty;
             CurrentFocusCategory = string.Empty;
-            CurrentPlanFilePath = string.Empty;
-            CurrentPlanSnapshot = string.Empty;
-            CurrentPlannedMinutes = 0;
             SaveToJson();
         }
 
@@ -162,12 +148,9 @@ namespace Prototype1
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
             EmergencyLockUntil = Life == 0 ? TodayMidnight : EmergencyLockUntil;
-            FocusSessionTelemetry.CompleteSession(DateTime.Now, "Emergency stop");
+            FocusSessionTelemetry.CompleteSession(DateTime.Now);
             CurrentFocusGoal = string.Empty;
             CurrentFocusCategory = string.Empty;
-            CurrentPlanFilePath = string.Empty;
-            CurrentPlanSnapshot = string.Empty;
-            CurrentPlannedMinutes = 0;
             SaveToJson();
             return true;
         }

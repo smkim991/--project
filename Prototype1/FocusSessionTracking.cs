@@ -20,9 +20,6 @@ namespace Prototype1
     public sealed class ForegroundAppInfo
     {
         public string ProcessName { get; set; } = "unknown";
-        public string WindowTitle { get; set; } = string.Empty;
-        public string ExecutablePath { get; set; } = string.Empty;
-        public int ProcessId { get; set; }
 
         public string DisplayName
         {
@@ -43,11 +40,7 @@ namespace Prototype1
         public DateTime StartAt { get; set; }
         public DateTime EndAt { get; set; }
         public string ProcessName { get; set; } = "unknown";
-        public string WindowTitle { get; set; } = string.Empty;
-        public string ExecutablePath { get; set; } = string.Empty;
         public FocusUsageState State { get; set; }
-        public bool IsBlocked { get; set; }
-        public string MatchedBlockRule { get; set; } = string.Empty;
 
         public int DurationSeconds
         {
@@ -65,22 +58,11 @@ namespace Prototype1
         public string Goal { get; set; } = "Focus session";
         public string Category { get; set; } = "Direct";
         public DateTime StartedAt { get; set; }
-        public DateTime PlannedEndAt { get; set; }
         public DateTime EndedAt { get; set; }
-        public string EndReason { get; set; } = "Ended";
-        public string PlanFilePath { get; set; } = string.Empty;
-        public string PlanSnapshot { get; set; } = string.Empty;
-        public int PlannedMinutes { get; set; }
-        public List<string> BlockRules { get; set; } = new List<string>();
         public List<AppUsageSegment> Segments { get; set; } = new List<AppUsageSegment>();
         public int ActiveSeconds { get; set; }
-        public int IdleSeconds { get; set; }
         public int BreakSeconds { get; set; }
-        public int BlockedSeconds { get; set; }
         public int AppSwitchCount { get; set; }
-        public int BlockedForegroundEntries { get; set; }
-        public int BlockedProcessAttempts { get; set; }
-        public int FocusScore { get; set; }
 
         public int TotalSeconds
         {
@@ -90,31 +72,14 @@ namespace Prototype1
                 return seconds <= 0 ? 0 : (int)Math.Round(seconds);
             }
         }
-
-        public int PlannedSeconds
-        {
-            get
-            {
-                double seconds = (PlannedEndAt - StartedAt).TotalSeconds;
-                return seconds <= 0 ? 0 : (int)Math.Round(seconds);
-            }
-        }
     }
 
     public sealed class AppUsageSummary
     {
         public string AppName { get; set; } = "unknown";
-        public string ExecutablePath { get; set; } = string.Empty;
         public int ActiveSeconds { get; set; }
-        public int BlockedSeconds { get; set; }
-        public int IdleSeconds { get; set; }
         public int BreakSeconds { get; set; }
         public int SwitchEntries { get; set; }
-
-        public int TotalSeconds
-        {
-            get { return ActiveSeconds + IdleSeconds + BreakSeconds; }
-        }
     }
 
     public static class FocusSessionStore
@@ -197,7 +162,7 @@ namespace Prototype1
 
             foreach (AppUsageSegment segment in session.Segments)
             {
-                if (segment == null || segment.DurationSeconds <= 0)
+                if (segment == null || segment.DurationSeconds <= 0 || segment.State == FocusUsageState.Idle)
                 {
                     continue;
                 }
@@ -205,29 +170,17 @@ namespace Prototype1
                 string appName = string.IsNullOrWhiteSpace(segment.ProcessName) ? "unknown" : segment.ProcessName;
                 if (!byApp.TryGetValue(appName, out AppUsageSummary summary))
                 {
-                    summary = new AppUsageSummary
-                    {
-                        AppName = appName,
-                        ExecutablePath = segment.ExecutablePath
-                    };
+                    summary = new AppUsageSummary { AppName = appName };
                     byApp.Add(appName, summary);
                 }
 
-                if (segment.State == FocusUsageState.Idle)
-                {
-                    summary.IdleSeconds += segment.DurationSeconds;
-                }
-                else if (segment.State == FocusUsageState.Break)
+                if (segment.State == FocusUsageState.Break)
                 {
                     summary.BreakSeconds += segment.DurationSeconds;
                 }
                 else
                 {
                     summary.ActiveSeconds += segment.DurationSeconds;
-                    if (segment.IsBlocked)
-                    {
-                        summary.BlockedSeconds += segment.DurationSeconds;
-                    }
                 }
             }
 
@@ -242,7 +195,7 @@ namespace Prototype1
 
             return byApp.Values
                 .OrderByDescending(s => s.ActiveSeconds)
-                .ThenByDescending(s => s.TotalSeconds)
+                .ThenByDescending(s => s.ActiveSeconds + s.BreakSeconds)
                 .ToList();
         }
 
@@ -272,18 +225,6 @@ namespace Prototype1
             if (session == null)
             {
                 return "선택된 세션이 없습니다.";
-            }
-
-            if (session != null)
-            {
-                StringBuilder conciseBuilder = new StringBuilder();
-                conciseBuilder.AppendLine("목표: " + DisplayText(session.Goal));
-                conciseBuilder.AppendLine("카테고리: " + DisplayText(session.Category));
-                conciseBuilder.AppendLine("시간: " + session.StartedAt.ToString("HH:mm") + " - " + session.EndedAt.ToString("HH:mm"));
-                conciseBuilder.AppendLine("활성 집중: " + FormatDuration(session.ActiveSeconds));
-                conciseBuilder.AppendLine("휴식: " + FormatDuration(session.BreakSeconds));
-                conciseBuilder.AppendLine("앱 전환: " + session.AppSwitchCount);
-                return conciseBuilder.ToString();
             }
 
             StringBuilder builder = new StringBuilder();
@@ -330,7 +271,6 @@ namespace Prototype1
         private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(2);
         private static FocusSessionRecord currentSession;
         private static AppUsageSegment openSegment;
-        private static bool lastSegmentWasBlocked;
 
         public static FocusSessionRecord LastCompletedSession { get; private set; }
 
@@ -341,17 +281,12 @@ namespace Prototype1
 
         public static void StartSession(
             DateTime startedAt,
-            DateTime plannedEndAt,
             string goal,
-            string category,
-            IEnumerable<string> blockRules,
-            string planFilePath,
-            string planSnapshot,
-            int plannedMinutes)
+            string category)
         {
             if (currentSession != null)
             {
-                CompleteSession(DateTime.Now, "Restarted");
+                CompleteSession(DateTime.Now);
             }
 
             LastCompletedSession = null;
@@ -360,17 +295,11 @@ namespace Prototype1
                 Id = Guid.NewGuid().ToString("N"),
                 Goal = string.IsNullOrWhiteSpace(goal) ? "Focus session" : goal.Trim(),
                 Category = string.IsNullOrWhiteSpace(category) ? "Direct" : category.Trim(),
-                PlanFilePath = planFilePath ?? string.Empty,
-                PlanSnapshot = planSnapshot ?? string.Empty,
-                PlannedMinutes = plannedMinutes > 0 ? plannedMinutes : Math.Max(1, (int)Math.Round((plannedEndAt - startedAt).TotalMinutes)),
                 StartedAt = startedAt,
-                PlannedEndAt = plannedEndAt,
-                EndedAt = startedAt,
-                BlockRules = blockRules == null ? new List<string>() : blockRules.Where(r => !string.IsNullOrWhiteSpace(r)).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+                EndedAt = startedAt
             };
 
             openSegment = null;
-            lastSegmentWasBlocked = false;
             CaptureTick();
         }
 
@@ -388,38 +317,20 @@ namespace Prototype1
                 ? FocusUsageState.Break
                 : idleTime >= IdleThreshold ? FocusUsageState.Idle : FocusUsageState.Active;
 
-            string matchedRule = string.Empty;
-            bool isBlocked = false;
-
-            if (openSegment == null || !IsSameSegment(openSegment, foreground, state, isBlocked, matchedRule))
+            if (openSegment == null || !IsSameSegment(openSegment, foreground, state))
             {
                 CloseOpenSegment(now);
-                openSegment = CreateSegment(now, foreground, state, isBlocked, matchedRule);
-
-                if (isBlocked && !lastSegmentWasBlocked)
-                {
-                    currentSession.BlockedForegroundEntries++;
-                }
-
-                lastSegmentWasBlocked = isBlocked;
+                openSegment = CreateSegment(now, foreground, state);
             }
             else
             {
                 openSegment.EndAt = now;
-                if (!string.IsNullOrWhiteSpace(foreground.WindowTitle))
-                {
-                    openSegment.WindowTitle = foreground.WindowTitle;
-                }
             }
 
             currentSession.EndedAt = now;
         }
 
-        public static void RegisterBlockedProcessAttempt(string processName)
-        {
-        }
-
-        public static FocusSessionRecord CompleteSession(DateTime endedAt, string endReason)
+        public static FocusSessionRecord CompleteSession(DateTime endedAt)
         {
             if (currentSession == null)
             {
@@ -429,7 +340,6 @@ namespace Prototype1
 
             CloseOpenSegment(endedAt);
             currentSession.EndedAt = endedAt;
-            currentSession.EndReason = string.IsNullOrWhiteSpace(endReason) ? "Ended" : endReason;
             RecalculateSummary(currentSession);
 
             FocusSessionRecord completed = currentSession;
@@ -438,22 +348,17 @@ namespace Prototype1
 
             currentSession = null;
             openSegment = null;
-            lastSegmentWasBlocked = false;
             return completed;
         }
 
-        private static AppUsageSegment CreateSegment(DateTime startedAt, ForegroundAppInfo foreground, FocusUsageState state, bool isBlocked, string matchedRule)
+        private static AppUsageSegment CreateSegment(DateTime startedAt, ForegroundAppInfo foreground, FocusUsageState state)
         {
             return new AppUsageSegment
             {
                 StartAt = startedAt,
                 EndAt = startedAt,
                 ProcessName = foreground.DisplayName,
-                WindowTitle = foreground.WindowTitle ?? string.Empty,
-                ExecutablePath = foreground.ExecutablePath ?? string.Empty,
-                State = state,
-                IsBlocked = isBlocked,
-                MatchedBlockRule = matchedRule ?? string.Empty
+                State = state
             };
         }
 
@@ -478,34 +383,27 @@ namespace Prototype1
             openSegment = null;
         }
 
-        private static bool IsSameSegment(AppUsageSegment segment, ForegroundAppInfo foreground, FocusUsageState state, bool isBlocked, string matchedRule)
+        private static bool IsSameSegment(AppUsageSegment segment, ForegroundAppInfo foreground, FocusUsageState state)
         {
-            if (segment.State != state || segment.IsBlocked != isBlocked)
+            if (segment.State != state)
             {
                 return false;
             }
 
             string processName = foreground == null ? string.Empty : foreground.DisplayName;
-            if (!string.Equals(segment.ProcessName, processName, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            return string.Equals(segment.MatchedBlockRule ?? string.Empty, matchedRule ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(segment.ProcessName, processName, StringComparison.OrdinalIgnoreCase);
         }
 
         private static void RecalculateSummary(FocusSessionRecord session)
         {
             session.ActiveSeconds = 0;
-            session.IdleSeconds = 0;
             session.BreakSeconds = 0;
-            session.BlockedSeconds = 0;
 
             foreach (AppUsageSegment segment in session.Segments)
             {
                 if (segment.State == FocusUsageState.Idle)
                 {
-                    session.IdleSeconds += segment.DurationSeconds;
+                    continue;
                 }
                 else if (segment.State == FocusUsageState.Break)
                 {
@@ -514,15 +412,10 @@ namespace Prototype1
                 else
                 {
                     session.ActiveSeconds += segment.DurationSeconds;
-                    if (segment.IsBlocked)
-                    {
-                        session.BlockedSeconds += segment.DurationSeconds;
-                    }
                 }
             }
 
             session.AppSwitchCount = CalculateAppSwitchCount(session.Segments);
-            session.FocusScore = 0;
         }
 
         private static int CalculateAppSwitchCount(List<AppUsageSegment> segments)
@@ -564,25 +457,13 @@ namespace Prototype1
             uint processId;
             NativeMethods.GetWindowThreadProcessId(handle, out processId);
 
-            ForegroundAppInfo info = new ForegroundAppInfo
-            {
-                ProcessId = unchecked((int)processId),
-                WindowTitle = GetWindowTitle(handle)
-            };
+            ForegroundAppInfo info = new ForegroundAppInfo();
 
             try
             {
                 using (Process process = Process.GetProcessById(unchecked((int)processId)))
                 {
                     info.ProcessName = process.ProcessName;
-                    try
-                    {
-                        info.ExecutablePath = process.MainModule == null ? string.Empty : process.MainModule.FileName;
-                    }
-                    catch
-                    {
-                        info.ExecutablePath = string.Empty;
-                    }
                 }
             }
             catch
@@ -591,19 +472,6 @@ namespace Prototype1
             }
 
             return info;
-        }
-
-        private static string GetWindowTitle(IntPtr handle)
-        {
-            int length = NativeMethods.GetWindowTextLength(handle);
-            if (length <= 0)
-            {
-                return string.Empty;
-            }
-
-            StringBuilder builder = new StringBuilder(length + 1);
-            NativeMethods.GetWindowText(handle, builder, builder.Capacity);
-            return builder.ToString();
         }
     }
 
@@ -624,74 +492,6 @@ namespace Prototype1
         }
     }
 
-    internal static class BlockedAppMatcher
-    {
-        private static readonly Dictionary<string, string[]> RuleAliases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "유튜브", new[] { "youtube", "youtu.be" } },
-            { "넷플릭스", new[] { "netflix" } },
-            { "네이버웹툰", new[] { "webtoon", "comic.naver", "naver webtoon" } },
-            { "인스타그램", new[] { "instagram" } },
-            { "카카오톡", new[] { "kakaotalk", "kakao talk", "kakao" } },
-            { "멜론", new[] { "melon" } },
-            { "틱톡", new[] { "tiktok", "tik tok" } },
-            { "메모장", new[] { "notepad" } },
-            { "엑셀", new[] { "excel" } }
-        };
-
-        public static bool IsBlocked(ForegroundAppInfo appInfo, IEnumerable<string> rules, out string matchedRule)
-        {
-            matchedRule = string.Empty;
-
-            if (appInfo == null || rules == null)
-            {
-                return false;
-            }
-
-            string processName = appInfo.ProcessName ?? string.Empty;
-            string title = appInfo.WindowTitle ?? string.Empty;
-            string path = appInfo.ExecutablePath ?? string.Empty;
-
-            foreach (string rule in rules)
-            {
-                if (string.IsNullOrWhiteSpace(rule))
-                {
-                    continue;
-                }
-
-                if (ContainsToken(processName, rule) || ContainsToken(title, rule) || ContainsToken(path, rule))
-                {
-                    matchedRule = rule;
-                    return true;
-                }
-
-                if (RuleAliases.TryGetValue(rule.Trim(), out string[] aliases))
-                {
-                    foreach (string alias in aliases)
-                    {
-                        if (ContainsToken(processName, alias) || ContainsToken(title, alias) || ContainsToken(path, alias))
-                        {
-                            matchedRule = rule;
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private static bool ContainsToken(string source, string token)
-        {
-            if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(token))
-            {
-                return false;
-            }
-
-            return source.IndexOf(token.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-    }
-
     internal static class NativeMethods
     {
         [DllImport("user32.dll")]
@@ -699,12 +499,6 @@ namespace Prototype1
 
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern int GetWindowTextLength(IntPtr hWnd);
 
         [DllImport("user32.dll")]
         public static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
