@@ -38,6 +38,16 @@ namespace Prototype1
         // 집중 종료 시각 (JSON 저장 X)
         public static DateTime FocusEndTime = DateTime.MinValue;
 
+        public static string CurrentFocusGoal { get; set; } = string.Empty;
+
+        public static string CurrentFocusCategory { get; set; } = string.Empty;
+
+        public static string CurrentPlanFilePath { get; set; } = string.Empty;
+
+        public static string CurrentPlanSnapshot { get; set; } = string.Empty;
+
+        public static int CurrentPlannedMinutes { get; set; }
+
         public static bool IsEmergencyLockedOut
         {
             get { return DateTime.Now < EmergencyLockUntil; }
@@ -87,19 +97,35 @@ namespace Prototype1
 
         public static void StartFocusSession(DateTime focusEndTime)
         {
+            DateTime startedAt = DateTime.Now;
             FocusEndTime = focusEndTime;
             IsBlockingActive = true;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
+            FocusSessionTelemetry.StartSession(
+                startedAt,
+                focusEndTime,
+                CurrentFocusGoal,
+                CurrentFocusCategory,
+                SavedBlockList,
+                CurrentPlanFilePath,
+                CurrentPlanSnapshot,
+                CurrentPlannedMinutes);
             SaveToJson();
         }
 
-        public static void CompleteFocusSession()
+        public static void CompleteFocusSession(string endReason = "Ended")
         {
+            FocusSessionTelemetry.CompleteSession(DateTime.Now, endReason);
             IsBlockingActive = false;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
+            CurrentFocusGoal = string.Empty;
+            CurrentFocusCategory = string.Empty;
+            CurrentPlanFilePath = string.Empty;
+            CurrentPlanSnapshot = string.Empty;
+            CurrentPlannedMinutes = 0;
             SaveToJson();
         }
 
@@ -136,6 +162,12 @@ namespace Prototype1
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
             EmergencyLockUntil = Life == 0 ? TodayMidnight : EmergencyLockUntil;
+            FocusSessionTelemetry.CompleteSession(DateTime.Now, "Emergency stop");
+            CurrentFocusGoal = string.Empty;
+            CurrentFocusCategory = string.Empty;
+            CurrentPlanFilePath = string.Empty;
+            CurrentPlanSnapshot = string.Empty;
+            CurrentPlannedMinutes = 0;
             SaveToJson();
             return true;
         }

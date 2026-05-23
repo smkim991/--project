@@ -63,6 +63,8 @@ namespace Prototype1.UI
             {
                 if (messageInputForm.ShowDialog(this) == DialogResult.OK)
                 {
+                    DataModel.CurrentFocusGoal = messageInputForm.EnteredMessage;
+                    DataModel.CurrentFocusCategory = currentSelectedCategory;
                     SaveSelectedCategoryAsActiveBlockList();
 
                     using (FocusSetupPendingForm nextForm = new FocusSetupPendingForm())

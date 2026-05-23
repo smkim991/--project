@@ -106,6 +106,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataModel.cs" />
+    <Compile Include="FocusSessionReportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FocusSessionTracking.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
