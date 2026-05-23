@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
 using Prototype1.UI;
 
 namespace Prototype1

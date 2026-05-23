@@ -274,11 +274,6 @@ namespace Prototype1
 
         public static FocusSessionRecord LastCompletedSession { get; private set; }
 
-        public static bool IsSessionActive
-        {
-            get { return currentSession != null; }
-        }
-
         public static void StartSession(
             DateTime startedAt,
             string goal,
