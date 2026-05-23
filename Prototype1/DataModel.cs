@@ -14,6 +14,9 @@ namespace Prototype1
         // 차단할 프로세스 명칭을 저장하는 전역 리스트
         public static List<string> SavedBlockList { get; set; } = new List<string>();
 
+        // 차단할 웹사이트의 키워드 (ex. "youtube", "유튜브", "netflix", "넷플릭스" etc..)
+        public static List<string> SavedWebBlockKeywordList { get; set; } = new List<string>();
+
         // 카테고리별 차단 항목 목록
         public static Dictionary<string, List<string>> BlockProfiles { get; set; } = CreateDefaultBlockProfiles();
 
@@ -165,6 +168,7 @@ namespace Prototype1
                 var saveData = new Dictionary<string, object>
                 {
                     { "SavedBlockList", SavedBlockList },
+                    { "SavedWebBlockKeywordList",SavedWebBlockKeywordList},
                     { "BlockProfiles", BlockProfiles },
                     { "IsBlockingActive", IsBlockingActive },
                     { "IsBreakActive", IsBreakActive },
@@ -203,6 +207,9 @@ namespace Prototype1
                 {
                     if (data.TryGetValue("SavedBlockList", out var blockListEl))
                         SavedBlockList = JsonSerializer.Deserialize<List<string>>(blockListEl.GetRawText()) ?? new List<string>();
+
+                    if (data.TryGetValue("SavedWebBlockKeywordList", out var keywordListEl))
+                        SavedWebBlockKeywordList = JsonSerializer.Deserialize<List<string>>(keywordListEl.GetRawText()) ?? new List<string>();
 
                     if (data.TryGetValue("BlockProfiles", out var blockProfilesEl))
                     {
