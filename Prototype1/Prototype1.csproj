@@ -128,9 +128,24 @@
       <Link>UI-branch\StudyPlanForm.cs</Link>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="..\StudyPlanForm.Dashboard.cs">
+      <Link>UI-branch\StudyPlanForm.Dashboard.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.Files.cs">
+      <Link>UI-branch\StudyPlanForm.Files.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.FocusPlan.cs">
+      <Link>UI-branch\StudyPlanForm.FocusPlan.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="..\StudyPlanForm.Designer.cs">
       <Link>UI-branch\StudyPlanForm.Designer.cs</Link>
       <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\SessionTimelinePanel.cs">
+      <Link>UI-branch\SessionTimelinePanel.cs</Link>
     </Compile>
     <Compile Include="..\FocusReasonForm.cs">
       <Link>UI-branch\FocusReasonForm.cs</Link>
