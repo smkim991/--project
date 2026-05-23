@@ -12,6 +12,11 @@ namespace Prototype1
         private ListView appUsageListView;
         private Button closeButton;
 
+        public FocusSessionReportForm()
+            : this(null)
+        {
+        }
+
         public FocusSessionReportForm(FocusSessionRecord session)
         {
             this.session = session;
@@ -60,7 +65,7 @@ namespace Prototype1
             closeButton.Location = new Point(690, 512);
             closeButton.Size = new Size(110, 34);
             closeButton.Text = "닫기";
-            closeButton.Click += delegate { Close(); };
+            closeButton.Click += closeButton_Click;
 
             Controls.Add(titleLabel);
             Controls.Add(summaryTextBox);
@@ -96,6 +101,11 @@ namespace Prototype1
                 item.SubItems.Add(app.SwitchEntries.ToString());
                 appUsageListView.Items.Add(item);
             }
+        }
+
+        private void closeButton_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }
