@@ -96,6 +96,7 @@ namespace Prototype1.UI
             }
         }
 
+        // 왼쪽 학습 파일 영역을 만든다.
         private void BuildSidebar(Control parent)
         {
             Panel root = new Panel();
@@ -143,6 +144,7 @@ namespace Prototype1.UI
             parent.Controls.Add(root);
         }
 
+        // 트리에서 우클릭했을 때 나오는 메뉴를 만든다.
         private void BuildTreeContextMenu()
         {
             treeContextMenu = new ContextMenuStrip();
@@ -154,6 +156,7 @@ namespace Prototype1.UI
             treeContextMenu.Items.Add("삭제", null, delegate { DeleteSelectedNode(); });
         }
 
+        // 오른쪽 탭 4개를 만든다.
         private void BuildMainTabs(Control parent)
         {
             dashboardTabs = new TabControl();
