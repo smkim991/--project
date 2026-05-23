@@ -90,7 +90,7 @@ namespace Prototype1.UI
             this.btnSelectStudent.TabIndex = 0;
             this.btnSelectStudent.Text = "대학생";
             this.btnSelectStudent.UseVisualStyleBackColor = true;
-            this.btnSelectStudent.Click += new System.EventHandler(this.button1_Click);
+            this.btnSelectStudent.Click += new System.EventHandler(this.btnSelectStudent_Click);
             // 
             // pnlBlockedItems
             // 
@@ -117,7 +117,6 @@ namespace Prototype1.UI
             this.lblCurrentModeDisplay.Size = new System.Drawing.Size(54, 18);
             this.lblCurrentModeDisplay.TabIndex = 2;
             this.lblCurrentModeDisplay.Text = "label1";
-            this.lblCurrentModeDisplay.Click += new System.EventHandler(this.lblCurrentModeDisplay_Click);
             // 
             // button1
             // 
@@ -128,7 +127,7 @@ namespace Prototype1.UI
             this.button1.TabIndex = 3;
             this.button1.Text = "저장";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click_1);
+            this.button1.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // BlockedAppsManagementForm
             // 
@@ -142,7 +141,6 @@ namespace Prototype1.UI
             this.Name = "BlockedAppsManagementForm";
             this.Text = "차단 앱 관리";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BlockedAppsManagementForm_FormClosing);
-            this.Load += new System.EventHandler(this.BlockedAppsManagementForm_Load);
             this.pnlModes.ResumeLayout(false);
             this.pnlBlockedItems.ResumeLayout(false);
             this.ResumeLayout(false);

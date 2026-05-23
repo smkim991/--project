@@ -83,7 +83,6 @@ namespace Prototype1.UI
             this.Name = "FocusReasonForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "집중 세션 이용 사유";
-            this.Load += new System.EventHandler(this.FocusReasonForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
