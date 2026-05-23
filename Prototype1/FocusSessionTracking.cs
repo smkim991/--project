@@ -325,25 +325,23 @@ namespace Prototype1
             currentSession.EndedAt = now;
         }
 
-        public static FocusSessionRecord CompleteSession(DateTime endedAt)
+        public static void CompleteSession(DateTime endedAt)
         {
             if (currentSession == null)
             {
                 LastCompletedSession = null;
-                return null;
+                return;
             }
 
             CloseOpenSegment(endedAt);
             currentSession.EndedAt = endedAt;
             RecalculateSummary(currentSession);
 
-            FocusSessionRecord completed = currentSession;
-            FocusSessionStore.AppendSession(completed);
-            LastCompletedSession = completed;
+            FocusSessionStore.AppendSession(currentSession);
+            LastCompletedSession = currentSession;
 
             currentSession = null;
             openSegment = null;
-            return completed;
         }
 
         private static AppUsageSegment CreateSegment(DateTime startedAt, ForegroundAppInfo foreground, FocusUsageState state)
