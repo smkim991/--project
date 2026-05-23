@@ -1,6 +1,6 @@
 ﻿namespace Prototype1
 {
-    partial class Prototype1
+    partial class MainForm
     {
         /// <summary>
         /// 필수 디자이너 변수입니다.
@@ -29,7 +29,9 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.btnBlockList = new System.Windows.Forms.Button();
+            this.btnCategorySettings = new System.Windows.Forms.Button();
+            this.btnManageBlockedApps = new System.Windows.Forms.Button();
+            this.btnStudyPlan = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
             this.btnActivateBlocking = new System.Windows.Forms.Button();
             this.btnStopBlocking = new System.Windows.Forms.Button();
@@ -43,19 +45,39 @@
             this.label4 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // btnBlockList
+            // btnCategorySettings
             // 
-            this.btnBlockList.Location = new System.Drawing.Point(505, 290);
-            this.btnBlockList.Name = "btnBlockList";
-            this.btnBlockList.Size = new System.Drawing.Size(192, 132);
-            this.btnBlockList.TabIndex = 1;
-            this.btnBlockList.Text = "차단목록관리";
-            this.btnBlockList.UseVisualStyleBackColor = true;
-            this.btnBlockList.Click += new System.EventHandler(this.btnBlockList_Click);
+            this.btnCategorySettings.Location = new System.Drawing.Point(700, 70);
+            this.btnCategorySettings.Name = "btnCategorySettings";
+            this.btnCategorySettings.Size = new System.Drawing.Size(192, 71);
+            this.btnCategorySettings.TabIndex = 1;
+            this.btnCategorySettings.Text = "카테고리 설정";
+            this.btnCategorySettings.UseVisualStyleBackColor = true;
+            this.btnCategorySettings.Click += new System.EventHandler(this.btnCategorySettings_Click);
+            // 
+            // btnManageBlockedApps
+            // 
+            this.btnManageBlockedApps.Location = new System.Drawing.Point(700, 150);
+            this.btnManageBlockedApps.Name = "btnManageBlockedApps";
+            this.btnManageBlockedApps.Size = new System.Drawing.Size(192, 71);
+            this.btnManageBlockedApps.TabIndex = 12;
+            this.btnManageBlockedApps.Text = "차단 앱 관리";
+            this.btnManageBlockedApps.UseVisualStyleBackColor = true;
+            this.btnManageBlockedApps.Click += new System.EventHandler(this.btnManageBlockedApps_Click);
+            // 
+            // btnStudyPlan
+            // 
+            this.btnStudyPlan.Location = new System.Drawing.Point(700, 230);
+            this.btnStudyPlan.Name = "btnStudyPlan";
+            this.btnStudyPlan.Size = new System.Drawing.Size(192, 71);
+            this.btnStudyPlan.TabIndex = 13;
+            this.btnStudyPlan.Text = "학습 계획 및 관리";
+            this.btnStudyPlan.UseVisualStyleBackColor = true;
+            this.btnStudyPlan.Click += new System.EventHandler(this.btnStudyPlan_Click);
             // 
             // btnExit
             // 
-            this.btnExit.Location = new System.Drawing.Point(505, 444);
+            this.btnExit.Location = new System.Drawing.Point(700, 444);
             this.btnExit.Name = "btnExit";
             this.btnExit.Size = new System.Drawing.Size(192, 71);
             this.btnExit.TabIndex = 2;
@@ -75,11 +97,11 @@
             // 
             // btnStopBlocking
             // 
-            this.btnStopBlocking.Location = new System.Drawing.Point(533, 165);
+            this.btnStopBlocking.Location = new System.Drawing.Point(700, 310);
             this.btnStopBlocking.Name = "btnStopBlocking";
-            this.btnStopBlocking.Size = new System.Drawing.Size(164, 103);
+            this.btnStopBlocking.Size = new System.Drawing.Size(192, 71);
             this.btnStopBlocking.TabIndex = 4;
-            this.btnStopBlocking.Text = "집중모드 정지";
+            this.btnStopBlocking.Text = "집중모드 정지(개발용)";
             this.btnStopBlocking.UseVisualStyleBackColor = true;
             this.btnStopBlocking.Click += new System.EventHandler(this.btnStopBlocking_Click);
             // 
@@ -163,11 +185,14 @@
             this.label4.TabIndex = 11;
             this.label4.Text = "집중모드 정지버튼은 개발 편의성을 위해서 일단 남겨두겠습니다.";
             // 
-            // Prototype1
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(722, 539);
+            this.ClientSize = new System.Drawing.Size(930, 539);
+            this.Controls.Add(this.btnStudyPlan);
+            this.Controls.Add(this.btnManageBlockedApps);
+            this.Controls.Add(this.btnCategorySettings);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.lblShowTimeLeft);
             this.Controls.Add(this.cmbMin);
@@ -178,18 +203,19 @@
             this.Controls.Add(this.btnStopBlocking);
             this.Controls.Add(this.btnActivateBlocking);
             this.Controls.Add(this.btnExit);
-            this.Controls.Add(this.btnBlockList);
-            this.Name = "Prototype1";
-            this.Text = "Prototype1";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Prototype1_FormClosing);
-            this.Load += new System.EventHandler(this.Prototype1_Load);
+            this.Name = "MainForm";
+            this.Text = "집중 모드";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-        private System.Windows.Forms.Button btnBlockList;
+        private System.Windows.Forms.Button btnCategorySettings;
+        private System.Windows.Forms.Button btnManageBlockedApps;
+        private System.Windows.Forms.Button btnStudyPlan;
         private System.Windows.Forms.Button btnExit;
         private System.Windows.Forms.Button btnActivateBlocking;
         private System.Windows.Forms.Button btnStopBlocking;

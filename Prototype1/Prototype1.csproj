@@ -54,16 +54,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>111B468B5C49ED3FBF8521E696127035EA7203A2</ManifestCertificateThumbprint>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ManifestKeyFile>Prototype1_TemporaryKey.pfx</ManifestKeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
     <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
     <TargetZone>LocalIntranet</TargetZone>
@@ -111,26 +105,57 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BlockListForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="BlockListForm.Designer.cs">
-      <DependentUpon>BlockListForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="DataModel.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\BlockedAppsManagementForm.cs">
+      <Link>UI-branch\BlockedAppsManagementForm.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\BlockedAppsManagementForm.Designer.cs">
+      <Link>UI-branch\BlockedAppsManagementForm.Designer.cs</Link>
+      <DependentUpon>BlockedAppsManagementForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.cs">
+      <Link>UI-branch\StudyPlanForm.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.Designer.cs">
+      <Link>UI-branch\StudyPlanForm.Designer.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\FocusReasonForm.cs">
+      <Link>UI-branch\FocusReasonForm.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\FocusReasonForm.Designer.cs">
+      <Link>UI-branch\FocusReasonForm.Designer.cs</Link>
+      <DependentUpon>FocusReasonForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\FocusSetupPendingForm.cs">
+      <Link>UI-branch\FocusSetupPendingForm.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\FocusSetupPendingForm.Designer.cs">
+      <Link>UI-branch\FocusSetupPendingForm.Designer.cs</Link>
+      <DependentUpon>FocusSetupPendingForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\CategorySettingsForm.cs">
+      <Link>UI-branch\CategorySettingsForm.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\CategorySettingsForm.Designer.cs">
+      <Link>UI-branch\CategorySettingsForm.Designer.cs</Link>
+      <DependentUpon>CategorySettingsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="BlockListForm.resx">
-      <DependentUpon>BlockListForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
