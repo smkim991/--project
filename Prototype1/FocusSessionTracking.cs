@@ -51,7 +51,7 @@ namespace Prototype1
             }
         }
     }
-
+  
     // 하나의 집중 세션을 나타냄
     public sealed class FocusSessionRecord
     {

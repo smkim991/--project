@@ -55,10 +55,6 @@ namespace Prototype1.UI
             }
         }
 
-        private void lblBlockedItemsDisplay_Click(object sender, EventArgs e)
-        {
-        }
-
         private void btnConfirmSelection_Click(object sender, EventArgs e)
         {
             using (FocusReasonForm messageInputForm = new FocusReasonForm())
@@ -68,11 +64,6 @@ namespace Prototype1.UI
                     DataModel.CurrentFocusGoal = messageInputForm.EnteredMessage;
                     DataModel.CurrentFocusCategory = currentSelectedCategory;
                     SaveSelectedCategoryAsActiveBlockList();
-
-                    using (FocusSetupPendingForm nextForm = new FocusSetupPendingForm())
-                    {
-                        nextForm.ShowDialog(this);
-                    }
 
                     ResetCategorySelectionUI();
                 }

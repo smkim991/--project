@@ -1,57 +1,36 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Prototype1.UI
 {
     public partial class BlockedAppsManagementForm : Form
     {
-        private List<string> allBlockableItems;
-        private Dictionary<string, List<string>> modeBlockedItems;
+        private static readonly string[] AllBlockableItems =
+        {
+            "넷플릭스", "네이버웹툰", "유튜브",
+            "메모장", "멜론", "인스타그램",
+            "엑셀", "카카오톡", "틱톡"
+        };
+
+        private readonly Dictionary<string, List<string>> modeBlockedItems;
         private string currentSelectedMode;
+        private bool isLoadingMode;
 
         public BlockedAppsManagementForm(Dictionary<string, List<string>> initialBlockedItems)
         {
             InitializeComponent();
-            InitializeAllBlockableItems(); // 모든 차단 가능 항목 초기화
-
-            // 메인 폼에서 전달받은 데이터를 modeBlockedItems에 복사
-            this.modeBlockedItems = new Dictionary<string, List<string>>();
-            foreach (var kvp in initialBlockedItems)
-            {
-                this.modeBlockedItems.Add(kvp.Key, new List<string>(kvp.Value));
-            }
-
-            SetupUI();        // UI 설정 (CheckedListBox 채우기)
+            modeBlockedItems = CloneBlockedItems(initialBlockedItems);
+            clbBlockableItems.Items.AddRange(AllBlockableItems);
+            clbBlockableItems.CheckOnClick = true;
             SelectMode("대학생");
-        }
-
-        private void InitializeAllBlockableItems()
-        {
-            // 모든 차단 가능한 항목들을 정의합니다. 이 리스트는 CheckedListBox를 채우는 데 사용됩니다.
-            allBlockableItems = new List<string>
-            {
-                "넷플릭스", "네이버웹툰", "유튜브",
-                "메모장", "멜론", "인스타그램",
-                "엑셀", "카카오톡", "틱톡"
-            };
         }
 
         public Dictionary<string, List<string>> GetUpdatedBlockedItems()
         {
-            return this.modeBlockedItems;
-        }
-
-        private void SetupUI()
-        {
-            clbBlockableItems.Items.AddRange(allBlockableItems.ToArray());
-            clbBlockableItems.CheckOnClick = true;
+            SaveCurrentModeChanges();
+            return modeBlockedItems;
         }
 
         private void SelectMode(string modeName)
@@ -62,47 +41,42 @@ namespace Prototype1.UI
             }
 
             currentSelectedMode = modeName;
-            lblCurrentModeDisplay.Text = $"현재 모드: {currentSelectedMode}";
-
-            // CheckedListBox의 모든 항목 체크 상태 초기화
-            for (int i = 0; i < clbBlockableItems.Items.Count; i++)
+            if (!modeBlockedItems.ContainsKey(currentSelectedMode))
             {
-                clbBlockableItems.SetItemChecked(i, false);
+                modeBlockedItems[currentSelectedMode] = new List<string>();
             }
 
-            // 새로 선택된 모드의 차단 항목들을 CheckedListBox에 반영
-            if (modeBlockedItems.ContainsKey(currentSelectedMode))
+            lblCurrentModeDisplay.Text = "현재 모드: " + currentSelectedMode;
+
+            isLoadingMode = true;
+            try
             {
-                List<string> blockedItemsForMode = modeBlockedItems[currentSelectedMode];
-                foreach (string item in blockedItemsForMode)
+                for (int i = 0; i < clbBlockableItems.Items.Count; i++)
                 {
-                    int index = clbBlockableItems.Items.IndexOf(item);
-                    if (index != -1)
-                    {
-                        clbBlockableItems.SetItemChecked(index, true);
-                    }
+                    string item = clbBlockableItems.Items[i].ToString();
+                    clbBlockableItems.SetItemChecked(i, modeBlockedItems[currentSelectedMode].Contains(item));
                 }
+            }
+            finally
+            {
+                isLoadingMode = false;
             }
         }
 
         private void SaveCurrentModeChanges()
         {
-            if(string.IsNullOrEmpty(currentSelectedMode)) return;
-
-            List<string> updatedBlockedItems = new List<string>();
-            foreach (object checkedItem in clbBlockableItems.CheckedItems)
+            if (string.IsNullOrEmpty(currentSelectedMode))
             {
-                updatedBlockedItems.Add(checkedItem.ToString());
+                return;
             }
-            modeBlockedItems[currentSelectedMode] = updatedBlockedItems;
+
+            modeBlockedItems[currentSelectedMode] = clbBlockableItems.CheckedItems
+                .Cast<object>()
+                .Select(item => item.ToString())
+                .ToList();
         }
 
-        private void BlockedAppsManagementForm_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
+        private void btnSelectStudent_Click(object sender, EventArgs e)
         {
             SelectMode("대학생");
         }
@@ -122,39 +96,54 @@ namespace Prototype1.UI
             SelectMode("수험생");
         }
 
-        private void lblCurrentModeDisplay_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void clbBlockableItems_ItemCheck(object sender, ItemCheckEventArgs e)
         {
-            string item = clbBlockableItems.Items[e.Index].ToString();
-
-            if (e.NewValue == CheckState.Checked)
+            if (isLoadingMode || string.IsNullOrEmpty(currentSelectedMode))
             {
-                if (!modeBlockedItems[currentSelectedMode].Contains(item))
-                {
-                    modeBlockedItems[currentSelectedMode].Add(item);
-                }
+                return;
+            }
+
+            string item = clbBlockableItems.Items[e.Index].ToString();
+            List<string> blockedItems = modeBlockedItems[currentSelectedMode];
+
+            if (e.NewValue == CheckState.Checked && !blockedItems.Contains(item))
+            {
+                blockedItems.Add(item);
             }
             else if (e.NewValue == CheckState.Unchecked)
             {
-                modeBlockedItems[currentSelectedMode].Remove(item);
+                blockedItems.Remove(item);
             }
         }
+
         private void BlockedAppsManagementForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            SaveCurrentModeChanges(); // 폼이 닫히기 전에 최종 변경사항 저장
-            this.DialogResult = DialogResult.OK;
+            SaveCurrentModeChanges();
+            DialogResult = DialogResult.OK;
         }
 
-        private void button1_Click_1(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
-            SaveCurrentModeChanges(); // 현재 모드의 변경사항을 저장
+            SaveCurrentModeChanges();
             MessageBox.Show("변경사항이 성공적으로 저장되었습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        private static Dictionary<string, List<string>> CloneBlockedItems(Dictionary<string, List<string>> source)
+        {
+            Dictionary<string, List<string>> clone = new Dictionary<string, List<string>>();
+            if (source == null)
+            {
+                return clone;
+            }
+
+            foreach (KeyValuePair<string, List<string>> item in source)
+            {
+                clone[item.Key] = item.Value == null ? new List<string>() : new List<string>(item.Value);
+            }
+
+            return clone;
         }
     }
 }
