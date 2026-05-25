@@ -155,6 +155,7 @@
             // 
             this.cmbMin.FormattingEnabled = true;
             this.cmbMin.Items.AddRange(new object[] {
+            "0",
             "10",
             "20",
             "30",
@@ -169,7 +170,7 @@
             // 
             this.lblShowTimeLeft.AutoSize = true;
             this.lblShowTimeLeft.Font = new System.Drawing.Font("굴림", 22F);
-            this.lblShowTimeLeft.Location = new System.Drawing.Point(99, 85);
+            this.lblShowTimeLeft.Location = new System.Drawing.Point(20, 81);
             this.lblShowTimeLeft.Name = "lblShowTimeLeft";
             this.lblShowTimeLeft.Size = new System.Drawing.Size(505, 59);
             this.lblShowTimeLeft.TabIndex = 10;
