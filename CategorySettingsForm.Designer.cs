@@ -73,7 +73,6 @@ namespace Prototype1.UI
             this.lblBlockedItemsDisplay.Size = new System.Drawing.Size(188, 18);
             this.lblBlockedItemsDisplay.TabIndex = 4;
             this.lblBlockedItemsDisplay.Text = "lblBlockedItemsDisplay";
-            this.lblBlockedItemsDisplay.Click += new System.EventHandler(this.lblBlockedItemsDisplay_Click);
             // 
             // btnConfirmSelection
             // 
