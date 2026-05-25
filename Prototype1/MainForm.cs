@@ -18,17 +18,30 @@ namespace Prototype1
         }
 
         private Dictionary<string, List<string>> currentBlockedItems;
+        private string currentActiveCategory = "";
+
+        private Dictionary<string, string> processMapping =
+            new Dictionary<string, string>() {
+        { "유튜브", "chrome" }, { "넷플릭스", "chrome" }, { "카카오톡", "KakaoTalk" },{ "틱톡", "TikTok" }, { "인스타그램", "Instagram" } 
+    };
+
+        public MainForm(string currentActiveCategory)
+        {
+            this.currentActiveCategory = currentActiveCategory;
+        }
 
         public MainForm()
         {
             InitializeComponent();
-            LoadBlockProfiles();
+
+            if (!System.ComponentModel.LicenseManager.UsageMode
+                .Equals(System.ComponentModel.LicenseUsageMode.Designtime))
+            {
+                LoadBlockProfiles();
+            }
         }
 
-        private void LoadBlockProfiles()
-        {
-            currentBlockedItems = DataModel.GetBlockProfilesCopy();
-        }
+        private void LoadBlockProfiles() { currentBlockedItems = DataModel.GetBlockProfilesCopy(); }
 
         public void KillProcesses(List<string> blockList)
         {
@@ -75,9 +88,9 @@ namespace Prototype1
 
         private void btnCategorySettings_Click(object sender, EventArgs e)
         {
-            using (CategorySettingsForm categorySettingsForm = new CategorySettingsForm(currentBlockedItems))
+            using (CategorySettingsForm2 categorySettingsForm2 = new CategorySettingsForm2(currentBlockedItems, this))
             {
-                categorySettingsForm.ShowDialog(this);
+                categorySettingsForm2.ShowDialog(this);
             }
         }
 
@@ -216,12 +229,22 @@ namespace Prototype1
 
             List<string> finalBlockList = new List<string>(DataModel.SavedBlockList);
 
+            List<string> realProcessList = new List<string>();
+
+            foreach (string item in finalBlockList)
+            {
+                if (processMapping.ContainsKey(item))
+                {
+                    realProcessList.Add(processMapping[item]);
+                }
+            }
+
             if (!finalBlockList.Contains("taskmgr"))
             {
                 finalBlockList.Add("taskmgr");
             }
 
-            KillProcesses(finalBlockList);
+            KillProcesses(realProcessList);
         }
 
         private string FormatTimeSpan(TimeSpan timeSpan)
@@ -252,10 +275,25 @@ namespace Prototype1
         {
             DataModel.LoadFromJson();
             LoadBlockProfiles();
+            for (int i = 0; i <= 23; i++)
+            {
+                cmbHour.Items.Add(i.ToString());
+            }
+            for (int i = 0; i <= 59; i++)
+            {
+                cmbMin.Items.Add(i.ToString());
+            }
+
+            cmbHour.SelectedIndex = 1;
+            cmbMin.SelectedIndex = 30;
+
             btnActivateBlocking.Enabled = false;
+
             btnStopBlocking.Text = "집중모드 정지(개발용)";
+
             cmbHour.TextChanged += ComboBox_TextChanged;
             cmbMin.TextChanged += ComboBox_TextChanged;
+
             UpdateBlockingUi();
         }
 
@@ -492,6 +530,29 @@ namespace Prototype1
             bool hasHour = !string.IsNullOrWhiteSpace(cmbHour.Text);
             bool hasMin = !string.IsNullOrWhiteSpace(cmbMin.Text);
             btnActivateBlocking.Enabled = hasHour && hasMin && !DataModel.IsEmergencyLockedOut;
+        }
+
+        public void SetCurrentCategory(string category)
+        {
+            currentActiveCategory = category;
+
+            label7.Text =
+                $"현재 모드 : {currentActiveCategory}";
+        }
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblShowTimeLeft_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void guna2Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }
