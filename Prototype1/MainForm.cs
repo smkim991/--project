@@ -99,6 +99,17 @@ namespace Prototype1
             using (StudyPlanForm studyPlanForm = new StudyPlanForm())
             {
                 studyPlanForm.ShowDialog(this);
+
+                if (studyPlanForm.FocusSessionStarted)
+                {
+                    if (!blockingtimer.Enabled)
+                    {
+                        blockingtimer.Start();
+                    }
+
+                    UpdateBlockingUi();
+                    MessageBox.Show("계획 기반 집중 세션을 시작했습니다.");
+                }
             }
         }
 
@@ -142,6 +153,16 @@ namespace Prototype1
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(DataModel.CurrentFocusGoal))
+            {
+                DataModel.CurrentFocusGoal = "집중 세션";
+            }
+
+            if (string.IsNullOrWhiteSpace(DataModel.CurrentFocusCategory))
+            {
+                DataModel.CurrentFocusCategory = "직접 시작";
+            }
+
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(totalMinutes));
 
             if (!blockingtimer.Enabled)
@@ -160,12 +181,15 @@ namespace Prototype1
                 return;
             }
 
+            FocusSessionTelemetry.CaptureTick();
+
             if (DateTime.Now >= DataModel.FocusEndTime)
             {
                 blockingtimer.Stop();
                 DataModel.CompleteFocusSession();
                 lblShowTimeLeft.Text = "00시간 00분 00초";
                 UpdateBlockingUi();
+                ShowLastSessionReport();
                 MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
                 return;
             }
@@ -183,6 +207,7 @@ namespace Prototype1
                         DataModel.CompleteFocusSession();
                         lblShowTimeLeft.Text = "00시간 00분 00초";
                         UpdateBlockingUi();
+                        ShowLastSessionReport();
                         MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
                         return;
                     }
@@ -208,6 +233,7 @@ namespace Prototype1
                 DataModel.CompleteFocusSession();
                 lblShowTimeLeft.Text = "00시간 00분 00초";
                 UpdateBlockingUi();
+                ShowLastSessionReport();
                 MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
                 return;
             }
@@ -295,7 +321,22 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
+            ShowLastSessionReport();
             MessageBox.Show("개발용 정지 버튼으로 차단이 종료되었습니다!");
+        }
+
+        private void ShowLastSessionReport()
+        {
+            FocusSessionRecord session = FocusSessionTelemetry.LastCompletedSession;
+            if (session == null)
+            {
+                return;
+            }
+
+            using (FocusSessionReportForm reportForm = new FocusSessionReportForm(session))
+            {
+                reportForm.ShowDialog(this);
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -491,6 +532,7 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
+            ShowLastSessionReport();
             MessageBox.Show($"긴급 종료되었습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
         }
 

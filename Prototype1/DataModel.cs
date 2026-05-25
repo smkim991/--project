@@ -41,6 +41,10 @@ namespace Prototype1
         // 집중 종료 시각 (JSON 저장 X)
         public static DateTime FocusEndTime = DateTime.MinValue;
 
+        public static string CurrentFocusGoal { get; set; } = string.Empty;
+
+        public static string CurrentFocusCategory { get; set; } = string.Empty;
+
         public static bool IsEmergencyLockedOut
         {
             get { return DateTime.Now < EmergencyLockUntil; }
@@ -90,19 +94,27 @@ namespace Prototype1
 
         public static void StartFocusSession(DateTime focusEndTime)
         {
+            DateTime startedAt = DateTime.Now;
             FocusEndTime = focusEndTime;
             IsBlockingActive = true;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
+            FocusSessionTelemetry.StartSession(
+                startedAt,
+                CurrentFocusGoal,
+                CurrentFocusCategory);
             SaveToJson();
         }
 
         public static void CompleteFocusSession()
         {
+            FocusSessionTelemetry.CompleteSession(DateTime.Now);
             IsBlockingActive = false;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
+            CurrentFocusGoal = string.Empty;
+            CurrentFocusCategory = string.Empty;
             SaveToJson();
         }
 
@@ -139,6 +151,9 @@ namespace Prototype1
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
             EmergencyLockUntil = Life == 0 ? TodayMidnight : EmergencyLockUntil;
+            FocusSessionTelemetry.CompleteSession(DateTime.Now);
+            CurrentFocusGoal = string.Empty;
+            CurrentFocusCategory = string.Empty;
             SaveToJson();
             return true;
         }
