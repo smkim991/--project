@@ -51,7 +51,8 @@ namespace Prototype1
             }
         }
     }
-
+  
+    // 하나의 집중 세션을 나타냄
     public sealed class FocusSessionRecord
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -82,6 +83,7 @@ namespace Prototype1
         public int SwitchEntries { get; set; }
     }
 
+    // FocusSessionRecord를 디스크에 저장하고 불러오는 기능을 담당
     public static class FocusSessionStore
     {
         private const string StoreFileName = "FocusSessions.json";
@@ -95,6 +97,7 @@ namespace Prototype1
             }
         }
 
+        // 집중 세션 파일 기반 불러오기
         public static List<FocusSessionRecord> LoadSessions()
         {
             try
@@ -117,6 +120,7 @@ namespace Prototype1
             }
         }
 
+        // 집중 세션 추가(최대 1000개까지 보존 가능)
         public static void AppendSession(FocusSessionRecord session)
         {
             if (session == null)
@@ -151,6 +155,7 @@ namespace Prototype1
 
     public static class FocusSessionReportBuilder
     {
+        // 사용자의 앱 사용 로그를 남기기 위해 사용하는 객체, chrome  | 활성 42분 | 휴식 0분 ... 과 같은 방식
         public static List<AppUsageSummary> BuildAppUsage(FocusSessionRecord session)
         {
             if (session == null || session.Segments == null)
@@ -298,6 +303,7 @@ namespace Prototype1
             CaptureTick();
         }
 
+        // segment 즉, 상태를 기록하는 procedure로, 1분마다 또는 포그라운드 앱이 바뀔 때마다 호출됨. 현재 포그라운드 앱과 idle 여부를 체크해서 Break / Idle / Active 상태를 판단해서 세그먼트를 닫고 새로 여는 방식으로 기록이 남게 됨
         public static void CaptureTick()
         {
             if (currentSession == null)
@@ -437,6 +443,7 @@ namespace Prototype1
 
     }
 
+    // window api를 이용해서 Foreground application의 정보를 가져오는 객체 processID를 이용해서 process name을 가져오도록 구현
     internal static class ForegroundWindowReader
     {
         public static ForegroundAppInfo GetForegroundAppInfo()
