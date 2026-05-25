@@ -112,12 +112,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataModel.cs" />
+
     <Compile Include="CategorySettingsForm2.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="CategorySettingsForm2.Designer.cs">
-      <DependentUpon>CategorySettingsForm2.cs</DependentUpon>
-    </Compile>
+  <SubType>Form</SubType>
+</Compile>
+
+<Compile Include="CategorySettingsForm2.Designer.cs">
+  <DependentUpon>CategorySettingsForm2.cs</DependentUpon>
+</Compile>
+
+<Compile Include="FocusSessionReportForm.cs">
+  <SubType>Form</SubType>
+</Compile>
+
+<Compile Include="FocusSessionTracking.cs" />
+
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -136,9 +145,24 @@
       <Link>UI-branch\StudyPlanForm.cs</Link>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="..\StudyPlanForm.Dashboard.cs">
+      <Link>UI-branch\StudyPlanForm.Dashboard.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.Files.cs">
+      <Link>UI-branch\StudyPlanForm.Files.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.FocusPlan.cs">
+      <Link>UI-branch\StudyPlanForm.FocusPlan.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="..\StudyPlanForm.Designer.cs">
       <Link>UI-branch\StudyPlanForm.Designer.cs</Link>
       <DependentUpon>StudyPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\SessionTimelinePanel.cs">
+      <Link>UI-branch\SessionTimelinePanel.cs</Link>
     </Compile>
     <Compile Include="..\FocusReasonForm.cs">
       <Link>UI-branch\FocusReasonForm.cs</Link>

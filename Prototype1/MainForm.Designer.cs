@@ -101,8 +101,39 @@
             this.label3.TabIndex = 7;
             this.label3.Text = "분";
             // 
+
+            // cmbHour
+            // 
+            this.cmbHour.FormattingEnabled = true;
+            this.cmbHour.Items.AddRange(new object[] {
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"});
+            this.cmbHour.Location = new System.Drawing.Point(148, 254);
+            this.cmbHour.Name = "cmbHour";
+            this.cmbHour.Size = new System.Drawing.Size(79, 32);
+            this.cmbHour.TabIndex = 8;
+
+            // cmbMin
+            // 
+            this.cmbMin.FormattingEnabled = true;
+            this.cmbMin.Items.AddRange(new object[] {
+            "0",
+            "10",
+            "20",
+            "30",
+            "40",
+            "50"});
+            this.cmbMin.Location = new System.Drawing.Point(312, 254);
+            this.cmbMin.Name = "cmbMin";
+            this.cmbMin.Size = new System.Drawing.Size(79, 32);
+            this.cmbMin.TabIndex = 9;
+
             // lblShowTimeLeft
             // 
+            this.lblShowTimeLeft.AutoSize = true;
             this.lblShowTimeLeft.Font = new System.Drawing.Font("맑은 고딕", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.lblShowTimeLeft.ForeColor = System.Drawing.Color.White;
             this.lblShowTimeLeft.Location = new System.Drawing.Point(11, 39);

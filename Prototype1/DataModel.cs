@@ -14,6 +14,9 @@ namespace Prototype1
         // 차단할 프로세스 명칭을 저장하는 전역 리스트
         public static List<string> SavedBlockList { get; set; } = new List<string>();
 
+        // 차단할 웹사이트의 키워드 (ex. "youtube", "유튜브", "netflix", "넷플릭스" etc..)
+        public static List<string> SavedWebBlockKeywordList { get; set; } = new List<string>();
+
         // 카테고리별 차단 항목 목록
         public static Dictionary<string, List<string>> BlockProfiles { get; set; } = CreateDefaultBlockProfiles();
 
@@ -37,6 +40,10 @@ namespace Prototype1
 
         // 집중 종료 시각 (JSON 저장 X)
         public static DateTime FocusEndTime = DateTime.MinValue;
+
+        public static string CurrentFocusGoal { get; set; } = string.Empty;
+
+        public static string CurrentFocusCategory { get; set; } = string.Empty;
 
         public static bool IsEmergencyLockedOut
         {
@@ -87,19 +94,27 @@ namespace Prototype1
 
         public static void StartFocusSession(DateTime focusEndTime)
         {
+            DateTime startedAt = DateTime.Now;
             FocusEndTime = focusEndTime;
             IsBlockingActive = true;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
+            FocusSessionTelemetry.StartSession(
+                startedAt,
+                CurrentFocusGoal,
+                CurrentFocusCategory);
             SaveToJson();
         }
 
         public static void CompleteFocusSession()
         {
+            FocusSessionTelemetry.CompleteSession(DateTime.Now);
             IsBlockingActive = false;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
+            CurrentFocusGoal = string.Empty;
+            CurrentFocusCategory = string.Empty;
             SaveToJson();
         }
 
@@ -136,6 +151,9 @@ namespace Prototype1
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
             EmergencyLockUntil = Life == 0 ? TodayMidnight : EmergencyLockUntil;
+            FocusSessionTelemetry.CompleteSession(DateTime.Now);
+            CurrentFocusGoal = string.Empty;
+            CurrentFocusCategory = string.Empty;
             SaveToJson();
             return true;
         }
@@ -165,6 +183,7 @@ namespace Prototype1
                 var saveData = new Dictionary<string, object>
                 {
                     { "SavedBlockList", SavedBlockList },
+                    { "SavedWebBlockKeywordList",SavedWebBlockKeywordList},
                     { "BlockProfiles", BlockProfiles },
                     { "IsBlockingActive", IsBlockingActive },
                     { "IsBreakActive", IsBreakActive },
@@ -203,6 +222,9 @@ namespace Prototype1
                 {
                     if (data.TryGetValue("SavedBlockList", out var blockListEl))
                         SavedBlockList = JsonSerializer.Deserialize<List<string>>(blockListEl.GetRawText()) ?? new List<string>();
+
+                    if (data.TryGetValue("SavedWebBlockKeywordList", out var keywordListEl))
+                        SavedWebBlockKeywordList = JsonSerializer.Deserialize<List<string>>(keywordListEl.GetRawText()) ?? new List<string>();
 
                     if (data.TryGetValue("BlockProfiles", out var blockProfilesEl))
                     {

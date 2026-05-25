@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Windows.Forms;
 using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using Prototype1.UI;
 
 namespace Prototype1
@@ -111,6 +112,17 @@ namespace Prototype1
             using (StudyPlanForm studyPlanForm = new StudyPlanForm())
             {
                 studyPlanForm.ShowDialog(this);
+
+                if (studyPlanForm.FocusSessionStarted)
+                {
+                    if (!blockingtimer.Enabled)
+                    {
+                        blockingtimer.Start();
+                    }
+
+                    UpdateBlockingUi();
+                    MessageBox.Show("계획 기반 집중 세션을 시작했습니다.");
+                }
             }
         }
 
@@ -154,6 +166,16 @@ namespace Prototype1
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(DataModel.CurrentFocusGoal))
+            {
+                DataModel.CurrentFocusGoal = "집중 세션";
+            }
+
+            if (string.IsNullOrWhiteSpace(DataModel.CurrentFocusCategory))
+            {
+                DataModel.CurrentFocusCategory = "직접 시작";
+            }
+
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(totalMinutes));
 
             if (!blockingtimer.Enabled)
@@ -172,12 +194,15 @@ namespace Prototype1
                 return;
             }
 
+            FocusSessionTelemetry.CaptureTick();
+
             if (DateTime.Now >= DataModel.FocusEndTime)
             {
                 blockingtimer.Stop();
                 DataModel.CompleteFocusSession();
                 lblShowTimeLeft.Text = "00시간 00분 00초";
                 UpdateBlockingUi();
+                ShowLastSessionReport();
                 MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
                 return;
             }
@@ -195,6 +220,7 @@ namespace Prototype1
                         DataModel.CompleteFocusSession();
                         lblShowTimeLeft.Text = "00시간 00분 00초";
                         UpdateBlockingUi();
+                        ShowLastSessionReport();
                         MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
                         return;
                     }
@@ -220,6 +246,7 @@ namespace Prototype1
                 DataModel.CompleteFocusSession();
                 lblShowTimeLeft.Text = "00시간 00분 00초";
                 UpdateBlockingUi();
+                ShowLastSessionReport();
                 MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
                 return;
             }
@@ -244,9 +271,61 @@ namespace Prototype1
                 finalBlockList.Add("taskmgr");
             }
 
-            KillProcesses(realProcessList);
-        }
 
+           KillProcesses(finalBlockList);
+KillWebBrowser(DataModel.SavedWebBlockKeywordList);
+
+        }
+        public void KillWebBrowser(List<string> keywords)
+        {
+            // 차단 검사를 수행할 타겟 브라우저 프로세스 이름 목록
+            // 창 제목(MainWindowTitle)을 검사하여 차단하기 때문에 안정성을 늘리기 위해 웹 브러우저에 대해서만 차단 알고리즘 실행
+            // ex. 메모장이나 다른 개발 도구 등에 적힌 단어까지 오작동으로 죽이는 경우 피하기 위한 로직
+            string[] browserNames = { "chrome", "msedge", "whale", "firefox" };
+
+            Process[] allProcesses = Process.GetProcesses();
+
+            foreach (Process p in allProcesses)
+            {
+                try
+                {
+                    // p가 브라우저인지 확인
+                    if (browserNames.Contains(p.ProcessName.ToLower()))
+                    {
+                        // 활성화된 메인 창이 있고, 창 제목이 비어있지 않은지 검사
+                        if (!string.IsNullOrEmpty(p.MainWindowTitle))
+                        {
+                            string windowTitle = p.MainWindowTitle.ToLower();
+
+                            foreach (string keyword in keywords)
+                            {
+                                // 만약 빈 문자열이 리스트에 들어있다면 무시
+                                if (string.IsNullOrWhiteSpace(keyword)) continue;
+
+                                string lowerKeyword = keyword.ToLower();
+
+                                // 창 제목에 차단 키워드가 포함되어 있는 경우
+                                if (windowTitle.Contains(lowerKeyword))
+                                {
+                                    p.Kill(); // 브라우저 프로세스 강제 종료
+                                    p.WaitForExit(1000); // 완전히 종료될 때까지 최대 1초 대기
+
+                                    break; // 이 프로세스는 이미 죽었으므로 다른 키워드는 더 이상 검사할 필요 없이 탈출
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"브라우저 종료 실패: {ex.Message}");
+                }
+                finally
+                {
+                    p.Dispose();
+                }
+            }
+        }
         private string FormatTimeSpan(TimeSpan timeSpan)
         {
             if (timeSpan < TimeSpan.Zero)
@@ -268,7 +347,22 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
+            ShowLastSessionReport();
             MessageBox.Show("개발용 정지 버튼으로 차단이 종료되었습니다!");
+        }
+
+        private void ShowLastSessionReport()
+        {
+            FocusSessionRecord session = FocusSessionTelemetry.LastCompletedSession;
+            if (session == null)
+            {
+                return;
+            }
+
+            using (FocusSessionReportForm reportForm = new FocusSessionReportForm(session))
+            {
+                reportForm.ShowDialog(this);
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -479,6 +573,7 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
+            ShowLastSessionReport();
             MessageBox.Show($"긴급 종료되었습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
         }
 
