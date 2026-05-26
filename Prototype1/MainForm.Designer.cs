@@ -180,7 +180,6 @@
             this.cmbMin.FormattingEnabled = true;
             this.cmbMin.Items.AddRange(new object[] {
             "00",
-            "0",
             "10",
             "20",
             "30",
@@ -472,9 +471,11 @@
             this.Controls.Add(this.guna2Panel1);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.btnStopBlocking);
-            this.Controls.Add(this.btnActivateBlocking);
-            this.Margin = new System.Windows.Forms.Padding(2);
+            // this.Controls.Add(this.btnActivateBlocking);
+            // this.Margin = new System.Windows.Forms.Padding(2);
+
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "집중 모드";
@@ -512,7 +513,7 @@
         private Guna.UI2.WinForms.Guna2Button btnCategorySettings;
         private Guna.UI2.WinForms.Guna2Button btnManageBlockedApps;
         private Guna.UI2.WinForms.Guna2Button btnStudyPlan;
-        private Guna.UI2.WinForms.Guna2Button btnExit;
+        // private Guna.UI2.WinForms.Guna2Button btnExit;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel3;
         private Guna.UI2.WinForms.Guna2ControlBox guna2ControlBox1;
         private System.Windows.Forms.Label label6;
