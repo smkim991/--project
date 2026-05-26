@@ -7,7 +7,7 @@ namespace Prototype1
 {
     public static class DataModel
     {
-        public const uint LIFE = 3;
+        public const uint INITIAL_LIFE_COUNT = 3;
         public const int LIFE_BREAK_MINUTES = 5;
         public const int STOP_COUNTDOWN_SECONDS = 10;
 
@@ -33,10 +33,14 @@ namespace Prototype1
         public static DateTime EmergencyLockUntil { get; set; } = DateTime.MinValue;
 
         // 매 자정이 지나서 프로그램 실행할 시 3으로 초기화
-        public static uint Life { get; set; } = LIFE;
+        public static uint Life { get; set; } = INITIAL_LIFE_COUNT;
 
         // 마지막으로 리셋된 날짜보다 오늘의 날짜가 더 크다면 자정(00시) 라인을 통과한 것
         public static DateTime LastResetTime { get; set; } = DateTime.MinValue;
+
+        // 다음 타이머 틱에서 FocusEndTime 검사를 건너뛸지 여부를 나타내는 플래그
+        public static bool SkipNextFocusEndCheck { get; set; } = false;
+
 
         // 집중 종료 시각 (JSON 저장 X)
         public static DateTime FocusEndTime = DateTime.MinValue;
@@ -120,14 +124,23 @@ namespace Prototype1
 
         public static bool StartLifeBreak()
         {
-            if (!TryUseLife())
+            if (Life == 0)
             {
                 return false;
             }
+            if (IsBreakActive) // 이미 자유시간 중이면 또 시작할 수 없음
+            {
+                return true;
+            }
 
+            Life--;
             IsBreakActive = true;
             BreakEndTime = DateTime.Now.AddMinutes(LIFE_BREAK_MINUTES);
-            FocusEndTime = FocusEndTime.AddMinutes(LIFE_BREAK_MINUTES);
+
+            _pausedFocusRemainingTime = FocusEndTime - DateTime.Now;
+            FocusEndTime = DateTime.MinValue;
+
+            SkipNextFocusEndCheck = false;
             SaveToJson();
             return true;
         }
@@ -136,15 +149,23 @@ namespace Prototype1
         {
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
+
+            FocusEndTime = DateTime.Now + _pausedFocusRemainingTime;
+            _pausedFocusRemainingTime = TimeSpan.Zero;
+
+            SkipNextFocusEndCheck = true;
             SaveToJson();
         }
 
         public static bool EmergencyStopFocusSession()
         {
-            if (!TryUseLife())
+            if (Life == 0)
             {
                 return false;
             }
+
+            Life = 0;
+            EmergencyLockUntil = TodayMidnight;
 
             IsBlockingActive = false;
             IsBreakActive = false;
@@ -172,7 +193,23 @@ namespace Prototype1
                 EmergencyLockUntil = TodayMidnight;
             }
 
+            SaveToJson();
             return true;
+        }
+
+        private class AppData
+        {
+            public List<string> SavedBlockList { get; set; }
+            public Dictionary<string, List<string>> BlockProfiles { get; set; }
+            public bool IsBlockingActive { get; set; }
+            public bool IsBreakActive { get; set; }
+            public DateTime FocusEndTime { get; set; }
+            public DateTime BreakEndTime { get; set; }
+            public TimeSpan PausedFocusRemainingTime { get; set; }
+            public uint Life { get; set; }
+            public DateTime EmergencyLockUntil { get; set; }
+            public DateTime LastResetTime { get; set; }
+            public bool SkipNextFocusEndCheck { get; set; }
         }
 
         // 현재 DataModel 속성 값들을 JSON 파일에 저장
@@ -180,7 +217,7 @@ namespace Prototype1
         {
             try
             {
-                var saveData = new Dictionary<string, object>
+                var saveData = new AppData
                 {
                     { "SavedBlockList", SavedBlockList },
                     { "SavedWebBlockKeywordList",SavedWebBlockKeywordList},
@@ -198,7 +235,7 @@ namespace Prototype1
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("JSON 저장 실패: {0}", ex.Message);
+                System.Diagnostics.Debug.WriteLine($"JSON 저장 실패: {ex.Message}");
             }
         }
 
@@ -209,16 +246,15 @@ namespace Prototype1
             {
                 if (!File.Exists(FilePath))
                 {
-                    // 파일이 없으면 최초 실행이므로 현재 날짜만 저장
-                    LastResetTime = DateTime.Now;
+                    ResetToInitialState();
                     SaveToJson();
                     return;
                 }
 
                 string jsonString = File.ReadAllText(FilePath);
-                var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonString);
+                var loadedData = JsonSerializer.Deserialize<AppData>(jsonString);
 
-                if (data != null)
+                if (loadedData != null)
                 {
                     if (data.TryGetValue("SavedBlockList", out var blockListEl))
                         SavedBlockList = JsonSerializer.Deserialize<List<string>>(blockListEl.GetRawText()) ?? new List<string>();
@@ -256,18 +292,22 @@ namespace Prototype1
                         LastResetTime = timeEl.GetDateTime();
                 }
 
-                // FocusEndTime은 저장하지 않으므로 재시작 시 진행 중 세션은 안전하게 해제합니다.
-                IsBlockingActive = false;
-                IsBreakActive = false;
-                BreakEndTime = DateTime.MinValue;
-
                 CheckMidnightReset();
                 ClearExpiredEmergencyLock();
-                ApplyLifeExhaustionLock();
+
+                if (IsBreakActive && DateTime.Now >= BreakEndTime)
+                {
+                    EndLifeBreak();
+                }
+                else if (IsBlockingActive && !IsBreakActive && DateTime.Now >= FocusEndTime)
+                {
+                    CompleteFocusSession();
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("JSON 불러오기 실패: {0}", ex.Message);
+                System.Diagnostics.Debug.WriteLine($"JSON 불러오기 실패: {ex.Message}");
+                ResetToInitialState();
             }
         }
 
@@ -278,7 +318,7 @@ namespace Prototype1
             // 마지막으로 리셋된 날짜보다 오늘의 날짜가 더 크다면 자정(00시) 라인을 통과한 것
             if (LastResetTime.Date < now.Date)
             {
-                Life = LIFE;
+                Life = INITIAL_LIFE_COUNT;
                 LastResetTime = now;
                 EmergencyLockUntil = DateTime.MinValue;
                 SaveToJson(); // 바뀐 상태를 JSON 파일에 즉시 저장
@@ -292,6 +332,21 @@ namespace Prototype1
                 EmergencyLockUntil = DateTime.MinValue;
                 SaveToJson();
             }
+        }
+
+        private static void ResetToInitialState()
+        {
+            SavedBlockList = new List<string>();
+            BlockProfiles = CreateDefaultBlockProfiles();
+            IsBlockingActive = false;
+            IsBreakActive = false;
+            FocusEndTime = DateTime.MinValue;
+            BreakEndTime = DateTime.MinValue;
+            _pausedFocusRemainingTime = TimeSpan.Zero;
+            Life = INITIAL_LIFE_COUNT; // MODIFIED: INITIAL_LIFE_COUNT 사용
+            EmergencyLockUntil = DateTime.MinValue;
+            LastResetTime = DateTime.Now;
+            SkipNextFocusEndCheck = false;
         }
 
         private static void ApplyLifeExhaustionLock()
