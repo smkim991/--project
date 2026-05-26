@@ -1,18 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Guna.UI2.WinForms;
+
 
 namespace Prototype1.UI
 {
-    public partial class CategorySettingsForm : Form
+    public partial class CategorySettingsForm2 : Form
     {
         private readonly Dictionary<string, List<string>> currentBlockedItems;
         private MainForm mainForm;
         private string currentSelectedCategory = "대학생";
-        private Button lastClickedCategoryButton = null;
+        private Guna.UI2.WinForms.Guna2Button lastClickedCategoryButton = null;
 
-        public CategorySettingsForm(Dictionary<string, List<string>> blockedItems, MainForm form)
+        public CategorySettingsForm2(Dictionary<string, List<string>> blockedItems, MainForm form)
         {
             InitializeComponent();
             currentBlockedItems = blockedItems ?? new Dictionary<string, List<string>>();
@@ -23,22 +25,24 @@ namespace Prototype1.UI
 
         private void CategoryButton_Click(object sender, EventArgs e)
         {
-            Button clickedButton = sender as Button;
+            Guna.UI2.WinForms.Guna2Button clickedButton =
+                sender as Guna.UI2.WinForms.Guna2Button;
+
+            clickedButton.FillColor = Color.FromArgb(139, 92, 246);
             if (clickedButton == null)
             {
                 return;
             }
 
-            if (lastClickedCategoryButton != null)
-            {
-                lastClickedCategoryButton.BackColor = SystemColors.Control;
-            }
-
+           
             currentSelectedCategory = clickedButton.Text;
-            clickedButton.BackColor = Color.LightBlue;
+
             lastClickedCategoryButton = clickedButton;
 
+           
             UpdateCategorySettingsDisplay(currentSelectedCategory);
+
+          
             btnConfirmSelection.Enabled = true;
         }
 
@@ -55,15 +59,22 @@ namespace Prototype1.UI
             }
         }
 
+        private void lblBlockedItemsDisplay_Click(object sender, EventArgs e)
+        {
+        }
+
         private void btnConfirmSelection_Click(object sender, EventArgs e)
         {
             using (FocusReasonForm messageInputForm = new FocusReasonForm())
             {
                 if (messageInputForm.ShowDialog(this) == DialogResult.OK)
                 {
-                    DataModel.CurrentFocusGoal = messageInputForm.EnteredMessage;
-                    DataModel.CurrentFocusCategory = currentSelectedCategory;
                     SaveSelectedCategoryAsActiveBlockList();
+
+                    using (FocusSetupPendingForm nextForm = new FocusSetupPendingForm())
+                    {
+                        nextForm.ShowDialog(this);
+                    }
 
                     ResetCategorySelectionUI();
                 }
@@ -87,6 +98,11 @@ namespace Prototype1.UI
 
             btnConfirmSelection.Enabled = false;
             currentSelectedCategory = string.Empty;
+        }
+
+        private void guna2Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

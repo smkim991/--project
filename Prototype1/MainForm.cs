@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Windows.Forms;
 using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using Prototype1.UI;
 
 namespace Prototype1
@@ -18,17 +19,30 @@ namespace Prototype1
         }
 
         private Dictionary<string, List<string>> currentBlockedItems;
+        private string currentActiveCategory = "";
+
+        private Dictionary<string, string> processMapping =
+            new Dictionary<string, string>() {
+        { "유튜브", "chrome" }, { "넷플릭스", "chrome" }, { "카카오톡", "KakaoTalk" },{ "틱톡", "TikTok" }, { "인스타그램", "Instagram" } 
+    };
+
+        public MainForm(string currentActiveCategory)
+        {
+            this.currentActiveCategory = currentActiveCategory;
+        }
 
         public MainForm()
         {
             InitializeComponent();
-            LoadBlockProfiles();
+
+            if (!System.ComponentModel.LicenseManager.UsageMode
+                .Equals(System.ComponentModel.LicenseUsageMode.Designtime))
+            {
+                LoadBlockProfiles();
+            }
         }
 
-        private void LoadBlockProfiles()
-        {
-            currentBlockedItems = DataModel.GetBlockProfilesCopy();
-        }
+        private void LoadBlockProfiles() { currentBlockedItems = DataModel.GetBlockProfilesCopy(); }
 
         public void KillProcesses(List<string> blockList)
         {
@@ -55,10 +69,10 @@ namespace Prototype1
                     }
                     finally
                     {
-                        if (p != null && !p.HasExited) // NEW: 프로세스가 아직 실행 중이면 Dispose() 호출 전 안전하게 종료 시도
-                            {
-                                try { p.Kill(); } catch { }
-                            }
+                        // if (p != null && !p.HasExited) // NEW: 프로세스가 아직 실행 중이면 Dispose() 호출 전 안전하게 종료 시도
+                        //    {
+                        //        try { p.Kill(); } catch { }
+                        //    }
                         p?.Dispose();
                     }
                 }
@@ -79,10 +93,13 @@ namespace Prototype1
 
         private void btnCategorySettings_Click(object sender, EventArgs e)
         {
-            using (CategorySettingsForm categorySettingsForm = new CategorySettingsForm(currentBlockedItems))
+            using (CategorySettingsForm2 categorySettingsForm2 = new CategorySettingsForm2(currentBlockedItems, this))
             {
-                categorySettingsForm.ShowDialog(this);
+                // categorySettingsForm.ShowDialog(this);
                 LoadBlockProfiles(); // MODIFIED: CategorySettingsForm에서 변경사항이 저장될 수 있으므로, 다시 로드
+
+                categorySettingsForm2.ShowDialog(this);
+
             }
         }
 
@@ -103,6 +120,17 @@ namespace Prototype1
             using (StudyPlanForm studyPlanForm = new StudyPlanForm())
             {
                 studyPlanForm.ShowDialog(this);
+
+                if (studyPlanForm.FocusSessionStarted)
+                {
+                    if (!blockingtimer.Enabled)
+                    {
+                        blockingtimer.Start();
+                    }
+
+                    UpdateBlockingUi();
+                    MessageBox.Show("계획 기반 집중 세션을 시작했습니다.");
+                }
             }
         }
 
@@ -173,6 +201,16 @@ namespace Prototype1
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(DataModel.CurrentFocusGoal))
+            {
+                DataModel.CurrentFocusGoal = "집중 세션";
+            }
+
+            if (string.IsNullOrWhiteSpace(DataModel.CurrentFocusCategory))
+            {
+                DataModel.CurrentFocusCategory = "직접 시작";
+            }
+
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(totalMinutes));
 
             if (!blockingtimer.Enabled)
@@ -191,6 +229,20 @@ namespace Prototype1
                 return;
             }
 
+            FocusSessionTelemetry.CaptureTick();
+
+            // if (DateTime.Now >= DataModel.FocusEndTime)
+            // {
+            //    blockingtimer.Stop();
+            //    DataModel.CompleteFocusSession();
+            //    lblShowTimeLeft.Text = "00시간 00분 00초";
+            //    UpdateBlockingUi();
+            //    ShowLastSessionReport();
+            //    MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
+            //    return;
+            // } 
+
+
             if (DataModel.IsBreakActive)
             {
                 if (DateTime.Now >= DataModel.BreakEndTime)
@@ -204,7 +256,12 @@ namespace Prototype1
                         DataModel.CompleteFocusSession();
                         lblShowTimeLeft.Text = "00시간 00분 00초";
                         UpdateBlockingUi();
+                        ShowLastSessionReport();
                         MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
+
+                        // ShowLastSessionReport();
+                        // MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
+
                         return;
                     }
 
@@ -230,6 +287,14 @@ namespace Prototype1
                     TimeSpan timeLeftForUI = DataModel.FocusEndTime - DateTime.Now;
                     lblShowTimeLeft.Text = FormatTimeSpan(timeLeftForUI);
 
+                // blockingtimer.Stop();
+                // DataModel.CompleteFocusSession();
+                // lblShowTimeLeft.Text = "00시간 00분 00초";
+                // UpdateBlockingUi();
+                // ShowLastSessionReport();
+                // MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
+                // return;
+
                 }
                 else // 정상적인 집중모드 실행 중 (SkipNextFocusEndCheck == false)
                 {
@@ -239,9 +304,11 @@ namespace Prototype1
                         DataModel.CompleteFocusSession();
                         lblShowTimeLeft.Text = "00시간 00분 00초";
                         UpdateBlockingUi();
+                        ShowLastSessionReport();
                         MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
                         return;
                     }
+
 
                     if (DataModel.Life == 0 && DataModel.IsEmergencyLockedOut)
                     {
@@ -249,6 +316,7 @@ namespace Prototype1
                         DataModel.CompleteFocusSession();
                         lblShowTimeLeft.Text = "00시간 00분 00초";
                         UpdateBlockingUi();
+                        ShowLastSessionReport();
                         MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
                         return;
                     }
@@ -270,6 +338,21 @@ namespace Prototype1
                 {
                     finalBlockList = new List<string>(DataModel.SavedBlockList);
                 }
+                
+                List<string> realProcessList = new List<string>();
+                
+                foreach (string item in finalBlockList)
+                {
+                    if (processMapping.ContainsKey(item))
+                    {
+                        realProcessList.Add(processMapping[item]);
+                    }
+                    else
+                    {
+                        // 매핑되지 않은 앱 이름은 그대로 프로세스 이름으로 간주하고 추가
+                        realProcessList.Add(item);
+                    }
+                }
 
 
                 if (!finalBlockList.Contains("taskmgr"))
@@ -277,9 +360,60 @@ namespace Prototype1
                     finalBlockList.Add("taskmgr");
                 }
 
-                KillProcesses(finalBlockList);
+                KillProcesses(realProcessList);
+                KillWebBrowser(DataModel.SavedWebBlockKeywordList);
+            }
+            
+            public void KillWebBrowser(List<string> keywords)
+            {
+
+            string[] browserNames = { "chrome", "msedge", "whale", "firefox" };
+
+            Process[] allProcesses = Process.GetProcesses();
+
+            foreach (Process p in allProcesses)
+            {
+                try
+                {
+                    // p가 브라우저인지 확인
+                    if (browserNames.Contains(p.ProcessName.ToLower()))
+                    {
+                        // 활성화된 메인 창이 있고, 창 제목이 비어있지 않은지 검사
+                        if (!string.IsNullOrEmpty(p.MainWindowTitle))
+                        {
+                            string windowTitle = p.MainWindowTitle.ToLower();
+
+                            foreach (string keyword in keywords)
+                            {
+                                // 만약 빈 문자열이 리스트에 들어있다면 무시
+                                if (string.IsNullOrWhiteSpace(keyword)) continue;
+
+                                string lowerKeyword = keyword.ToLower();
+
+                                // 창 제목에 차단 키워드가 포함되어 있는 경우
+                                if (windowTitle.Contains(lowerKeyword))
+                                {
+                                    p.Kill(); // 브라우저 프로세스 강제 종료
+                                    p.WaitForExit(1000); // 완전히 종료될 때까지 최대 1초 대기
+
+                                    break; // 이 프로세스는 이미 죽었으므로 다른 키워드는 더 이상 검사할 필요 없이 탈출
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"브라우저 종료 실패: {ex.Message}");
+                }
+                finally
+                {
+                    p.Dispose();
+                }
+
             }
         }
+
         private string FormatTimeSpan(TimeSpan timeSpan)
         {
             if (timeSpan < TimeSpan.Zero)
@@ -301,7 +435,22 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
+            ShowLastSessionReport();
             MessageBox.Show("개발용 정지 버튼으로 차단이 종료되었습니다!");
+        }
+
+        private void ShowLastSessionReport()
+        {
+            FocusSessionRecord session = FocusSessionTelemetry.LastCompletedSession;
+            if (session == null)
+            {
+                return;
+            }
+
+            using (FocusSessionReportForm reportForm = new FocusSessionReportForm(session))
+            {
+                reportForm.ShowDialog(this);
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -309,7 +458,24 @@ namespace Prototype1
             DataModel.LoadFromJson(); // 애플리케이션 시작 시 저장된 데이터 로드
             LoadBlockProfiles(); // 차단 프로필 로드
 
+            // DataModel.LoadFromJson();
+            // LoadBlockProfiles();
+            for (int i = 0; i <= 23; i++)
+            {
+                cmbHour.Items.Add(i.ToString());
+            }
+            for (int i = 0; i <= 59; i++)
+            {
+                cmbMin.Items.Add(i.ToString());
+            }
+
+            cmbHour.SelectedIndex = 1;
+            cmbMin.SelectedIndex = 30;
+
+            // btnActivateBlocking.Enabled = false;
+
             btnStopBlocking.Text = "집중모드 정지(개발용)";
+
             cmbHour.TextChanged += ComboBox_TextChanged;
             cmbMin.TextChanged += ComboBox_TextChanged;
 
@@ -517,6 +683,7 @@ namespace Prototype1
 
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
+            ShowLastSessionReport();
             MessageBox.Show($"긴급 종료되었습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
         }
 
@@ -589,6 +756,30 @@ namespace Prototype1
             }
 
             btnActivateBlocking.Enabled = hasHour && isMinValid && !DataModel.IsEmergencyLockedOut;
+
+
         }
-    }
+
+        public void SetCurrentCategory(string category)
+        {
+            currentActiveCategory = category;
+
+            label7.Text =
+                $"현재 모드 : {currentActiveCategory}";
+        }
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblShowTimeLeft_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void guna2Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
 }
