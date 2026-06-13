@@ -10,6 +10,9 @@ namespace Prototype1.UI
 {
     public partial class StudyPlanForm : Form
     {
+        private const string EmptyFolderPlaceholderText = "(비어 있음)";
+        private static readonly object EmptyFolderPlaceholderTag = new object();
+
         private void EnsureDefaultStudyFile()
         {
             string defaultFilePath = Path.Combine(defaultStudyFolderPath, "학습 메모.txt");
@@ -45,10 +48,12 @@ namespace Prototype1.UI
 
         private void RefreshStudyTree()
         {
+            string selectedPath = studyTreeView.SelectedNode == null ? null : studyTreeView.SelectedNode.Tag as string;
+
             studyTreeView.BeginUpdate();
             studyTreeView.Nodes.Clear();
 
-            foreach (string directory in Directory.GetDirectories(studyWorkspacePath).OrderBy(Path.GetFileName))
+            foreach (string directory in GetSortedDirectories(studyWorkspacePath))
             {
                 TreeNode directoryNode = CreateDirectoryNode(directory, Path.GetFileName(directory));
                 studyTreeView.Nodes.Add(directoryNode);
@@ -56,12 +61,17 @@ namespace Prototype1.UI
                 directoryNode.Expand();
             }
 
-            foreach (string file in Directory.GetFiles(studyWorkspacePath).OrderBy(Path.GetFileName))
+            foreach (string file in GetSortedFiles(studyWorkspacePath))
             {
                 studyTreeView.Nodes.Add(CreateFileNode(file));
             }
 
             studyTreeView.EndUpdate();
+
+            if (!string.IsNullOrWhiteSpace(selectedPath) && (File.Exists(selectedPath) || Directory.Exists(selectedPath)))
+            {
+                SelectPath(selectedPath);
+            }
         }
 
         private TreeNode CreateDirectoryNode(string path, string name)
@@ -74,9 +84,14 @@ namespace Prototype1.UI
 
         private TreeNode CreateFileNode(string path)
         {
-            TreeNode node = new TreeNode(Path.GetFileName(path));
+            TreeNode node = new TreeNode(FormatFileNodeText(path));
             node.Tag = path;
             return node;
+        }
+
+        private string FormatFileNodeText(string path)
+        {
+            return Path.GetFileName(path);
         }
 
         private void PopulateDirectoryNode(TreeNode directoryNode)
@@ -87,17 +102,105 @@ namespace Prototype1.UI
                 return;
             }
 
-            foreach (string directory in Directory.GetDirectories(path).OrderBy(Path.GetFileName))
+            bool hasChild = false;
+
+            foreach (string directory in GetSortedDirectories(path))
             {
                 TreeNode child = CreateDirectoryNode(directory, Path.GetFileName(directory));
                 directoryNode.Nodes.Add(child);
                 PopulateDirectoryNode(child);
+                hasChild = true;
             }
 
-            foreach (string file in Directory.GetFiles(path).OrderBy(Path.GetFileName))
+            foreach (string file in GetSortedFiles(path))
             {
                 directoryNode.Nodes.Add(CreateFileNode(file));
+                hasChild = true;
             }
+
+            if (!hasChild)
+            {
+                AddEmptyFolderPlaceholder(directoryNode);
+            }
+        }
+
+        private void AddEmptyFolderPlaceholder(TreeNode directoryNode)
+        {
+            TreeNode placeholder = new TreeNode(EmptyFolderPlaceholderText);
+            placeholder.Tag = EmptyFolderPlaceholderTag;
+            placeholder.ForeColor = MutedTextColor;
+            placeholder.NodeFont = new Font(studyTreeView.Font, FontStyle.Italic);
+            directoryNode.Nodes.Add(placeholder);
+        }
+
+        private bool IsEmptyFolderPlaceholder(TreeNode node)
+        {
+            return node != null && ReferenceEquals(node.Tag, EmptyFolderPlaceholderTag);
+        }
+
+        private IEnumerable<string> GetSortedDirectories(string directory)
+        {
+            IEnumerable<string> directories = Directory.GetDirectories(directory);
+            switch (studyTreeSortMode)
+            {
+                case StudyTreeSortMode.CreatedDescending:
+                    return directories
+                        .OrderByDescending(GetCreationTimeSafe)
+                        .ThenBy(Path.GetFileName);
+                case StudyTreeSortMode.NameAscending:
+                    return directories.OrderBy(Path.GetFileName);
+                case StudyTreeSortMode.NameDescending:
+                default:
+                    return directories.OrderByDescending(Path.GetFileName);
+            }
+        }
+
+        private IEnumerable<string> GetSortedFiles(string directory)
+        {
+            IEnumerable<string> files = Directory.GetFiles(directory);
+            switch (studyTreeSortMode)
+            {
+                case StudyTreeSortMode.NameAscending:
+                    return files.OrderBy(Path.GetFileName);
+                case StudyTreeSortMode.NameDescending:
+                    return files.OrderByDescending(Path.GetFileName);
+                case StudyTreeSortMode.CreatedDescending:
+                default:
+                    return files
+                        .OrderByDescending(GetCreationTimeSafe)
+                        .ThenBy(Path.GetFileName);
+            }
+        }
+
+        private DateTime GetCreationTimeSafe(string path)
+        {
+            try
+            {
+                return File.Exists(path) ? File.GetCreationTime(path) : Directory.GetCreationTime(path);
+            }
+            catch
+            {
+                return DateTime.MinValue;
+            }
+        }
+
+        private void UpdateFileHeader(string title, string path)
+        {
+            lblFileTitle.Text = string.IsNullOrWhiteSpace(title) ? "파일을 선택하세요" : title;
+            lblFileDate.Text = FormatCreationDateText(path);
+        }
+
+        private string FormatCreationDateText(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || (!File.Exists(path) && !Directory.Exists(path)))
+            {
+                return string.Empty;
+            }
+
+            DateTime creationTime = GetCreationTimeSafe(path);
+            return creationTime == DateTime.MinValue
+                ? string.Empty
+                : string.Format("생성일 {0:yyyy-MM-dd}", creationTime);
         }
 
         private void SelectFirstFileNode()
@@ -145,6 +248,16 @@ namespace Prototype1.UI
 
         private void studyTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            if (IsEmptyFolderPlaceholder(e.Node))
+            {
+                if (e.Node.Parent != null)
+                {
+                    studyTreeView.SelectedNode = e.Node.Parent;
+                }
+
+                return;
+            }
+
             LoadSelectedNodeFile();
         }
 
@@ -216,12 +329,15 @@ namespace Prototype1.UI
         {
             TreeNode selected = studyTreeView.SelectedNode;
             bool hasSelection = selected != null;
-            bool isRoot = hasSelection && IsWorkspaceRoot(selected.Tag as string);
+            bool hasPathSelection = hasSelection &&
+                                    !IsEmptyFolderPlaceholder(selected) &&
+                                    !string.IsNullOrWhiteSpace(selected.Tag as string);
+            bool isRoot = hasPathSelection && IsWorkspaceRoot(selected.Tag as string);
 
             treeContextMenu.Items[0].Enabled = true;
             treeContextMenu.Items[1].Enabled = true;
-            treeContextMenu.Items[2].Enabled = hasSelection && !isRoot;
-            treeContextMenu.Items[4].Enabled = hasSelection && !isRoot;
+            treeContextMenu.Items[2].Enabled = hasPathSelection && !isRoot;
+            treeContextMenu.Items[4].Enabled = hasPathSelection && !isRoot;
         }
 
         private void LoadSelectedNodeFile()
@@ -233,6 +349,7 @@ namespace Prototype1.UI
 
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             {
+                ClearMarkdownPreview();
                 currentFilePath = null;
                 isLoadingFile = true;
                 txtMemo.Text = "폴더를 선택했습니다. 왼쪽 사이드바에서 파일을 선택하거나 마우스 오른쪽 버튼으로 새 파일을 추가하세요.";
@@ -240,12 +357,14 @@ namespace Prototype1.UI
                 txtMemo.Enabled = false;
                 btnSaveFile.Enabled = false;
                 btnStartFocusFromPlan.Enabled = false;
-                lblFileTitle.Text = selected == null ? "파일을 선택하세요" : selected.Text;
+                btnToggleMarkdownPreview.Enabled = false;
+                UpdateFileHeader(selected == null ? "파일을 선택하세요" : GetNodeDisplayName(selected), path);
                 return;
             }
 
             try
             {
+                SetMarkdownPreviewMode(false);
                 currentFilePath = path;
                 isLoadingFile = true;
                 txtMemo.Text = File.ReadAllText(path);
@@ -254,12 +373,13 @@ namespace Prototype1.UI
                 txtMemo.Enabled = true;
                 btnSaveFile.Enabled = false;
                 btnStartFocusFromPlan.Enabled = true;
-                lblFileTitle.Text = Path.GetFileName(path);
+                btnToggleMarkdownPreview.Enabled = true;
+                UpdateFileHeader(Path.GetFileName(path), path);
                 dashboardTabs.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("파일을 불러오는 데 실패했습니다: " + ex.Message, "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AlertDialog.Show(this, "파일을 불러오는 데 실패했습니다: " + ex.Message, "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -293,7 +413,7 @@ namespace Prototype1.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show("파일을 저장하는 데 실패했습니다: " + ex.Message, "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AlertDialog.Show(this, "파일을 저장하는 데 실패했습니다: " + ex.Message, "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -355,7 +475,7 @@ namespace Prototype1.UI
 
             if (File.Exists(destination) || Directory.Exists(destination))
             {
-                MessageBox.Show("같은 이름의 파일 또는 폴더가 이미 있습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AlertDialog.Show(this, "같은 이름의 파일 또는 폴더가 이미 있습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -382,8 +502,9 @@ namespace Prototype1.UI
                 return;
             }
 
-            DialogResult result = MessageBox.Show(
-                selected.Text + " 항목을 삭제할까요?",
+            DialogResult result = AlertDialog.Show(
+                this,
+                GetNodeDisplayName(selected) + " 항목을 삭제할까요?",
                 "삭제 확인",
                 MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Warning);
@@ -406,12 +527,15 @@ namespace Prototype1.UI
 
             if (IsCurrentFileAffectedByDelete(path))
             {
+                ClearMarkdownPreview();
                 currentFilePath = null;
                 isFileDirty = false;
                 txtMemo.Text = string.Empty;
                 txtMemo.Enabled = false;
                 btnSaveFile.Enabled = false;
                 btnStartFocusFromPlan.Enabled = false;
+                btnToggleMarkdownPreview.Enabled = false;
+                UpdateFileHeader("파일을 선택하세요", null);
             }
 
             RefreshStudyTree();
@@ -435,6 +559,27 @@ namespace Prototype1.UI
             return normalizedFile.StartsWith(normalizedFolder, StringComparison.OrdinalIgnoreCase);
         }
 
+        private string GetNodeDisplayName(TreeNode node)
+        {
+            string path = node == null ? null : node.Tag as string;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return node == null ? string.Empty : node.Text;
+            }
+
+            if (File.Exists(path))
+            {
+                return Path.GetFileName(path);
+            }
+
+            if (Directory.Exists(path))
+            {
+                return new DirectoryInfo(path).Name;
+            }
+
+            return node.Text;
+        }
+
         private string GetTargetDirectoryForCreate()
         {
             if (!hasLastTreeMouseLocation)
@@ -451,6 +596,11 @@ namespace Prototype1.UI
             if (node == null)
             {
                 return studyWorkspacePath;
+            }
+
+            if (IsEmptyFolderPlaceholder(node))
+            {
+                return GetDirectoryForNode(node.Parent);
             }
 
             string path = node.Tag as string;
@@ -577,13 +727,19 @@ namespace Prototype1.UI
                 dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
                 dialog.MinimizeBox = false;
                 dialog.MaximizeBox = false;
+                dialog.BackColor = AppBackColor;
+                dialog.ForeColor = TextColor;
                 dialog.ClientSize = new Size(360, 130);
 
                 prompt.Text = label;
                 prompt.Location = new Point(14, 14);
                 prompt.Size = new Size(330, 22);
+                prompt.ForeColor = TextColor;
 
                 input.Text = defaultValue;
+                input.BackColor = FieldColor;
+                input.BorderStyle = BorderStyle.FixedSingle;
+                input.ForeColor = TextColor;
                 input.Location = new Point(14, 42);
                 input.Size = new Size(330, 26);
                 input.SelectAll();
@@ -592,11 +748,13 @@ namespace Prototype1.UI
                 okButton.DialogResult = DialogResult.OK;
                 okButton.Location = new Point(180, 84);
                 okButton.Size = new Size(78, 30);
+                StylePrimaryButton(okButton);
 
                 cancelButton.Text = "취소";
                 cancelButton.DialogResult = DialogResult.Cancel;
                 cancelButton.Location = new Point(266, 84);
                 cancelButton.Size = new Size(78, 30);
+                AlertDialog.StyleButton(cancelButton, false, true);
 
                 dialog.Controls.Add(prompt);
                 dialog.Controls.Add(input);

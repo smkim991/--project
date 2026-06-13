@@ -14,13 +14,14 @@ namespace Prototype1.UI
         {
             if (DataModel.IsBlockingActive)
             {
-                MessageBox.Show("이미 집중 모드가 실행 중입니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AlertDialog.Show(this, "이미 집중 모드가 실행 중입니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             if (DataModel.IsEmergencyLockedOut)
             {
-                MessageBox.Show(
+                AlertDialog.Show(
+                    this,
                     "라이프를 모두 소진해서 지금은 집중 모드를 시작할 수 없습니다.\r\n다시 시작 가능 시간: " + DataModel.EmergencyLockUntil.ToString("yyyy-MM-dd HH:mm"),
                     "알림",
                     MessageBoxButtons.OK,
@@ -30,7 +31,7 @@ namespace Prototype1.UI
 
             if (string.IsNullOrWhiteSpace(currentFilePath) || !File.Exists(currentFilePath))
             {
-                MessageBox.Show("먼저 파일을 선택하세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AlertDialog.Show(this, "먼저 파일을 선택하세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -237,20 +238,29 @@ namespace Prototype1.UI
                 dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
                 dialog.MinimizeBox = false;
                 dialog.MaximizeBox = false;
+                dialog.BackColor = AppBackColor;
+                dialog.ForeColor = TextColor;
                 dialog.ClientSize = new Size(460, 330);
 
                 goalLabel.Text = "목표";
+                goalLabel.ForeColor = TextColor;
                 goalLabel.Location = new Point(16, 16);
                 goalLabel.Size = new Size(420, 22);
 
                 goalBox.Text = draft.Goal;
+                goalBox.BackColor = FieldColor;
+                goalBox.BorderStyle = BorderStyle.FixedSingle;
+                goalBox.ForeColor = TextColor;
                 goalBox.Location = new Point(16, 42);
                 goalBox.Size = new Size(420, 26);
 
                 durationLabel.Text = "집중 시간";
+                durationLabel.ForeColor = TextColor;
                 durationLabel.Location = new Point(16, 82);
                 durationLabel.Size = new Size(120, 22);
 
+                durationBox.BackColor = FieldColor;
+                durationBox.ForeColor = TextColor;
                 durationBox.Minimum = 5;
                 durationBox.Maximum = 240;
                 durationBox.Increment = 5;
@@ -259,10 +269,13 @@ namespace Prototype1.UI
                 durationBox.Size = new Size(120, 26);
 
                 modeLabel.Text = "추천 모드";
+                modeLabel.ForeColor = TextColor;
                 modeLabel.Location = new Point(156, 82);
                 modeLabel.Size = new Size(120, 22);
 
+                modeBox.BackColor = FieldColor;
                 modeBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                modeBox.ForeColor = TextColor;
                 modeBox.Location = new Point(156, 108);
                 modeBox.Size = new Size(150, 26);
                 foreach (string category in profiles.Keys)
@@ -282,9 +295,13 @@ namespace Prototype1.UI
                 }
 
                 blockLabel.Text = "차단 앱";
+                blockLabel.ForeColor = TextColor;
                 blockLabel.Location = new Point(16, 150);
                 blockLabel.Size = new Size(420, 22);
 
+                blockBox.BackColor = FieldColor;
+                blockBox.BorderStyle = BorderStyle.FixedSingle;
+                blockBox.ForeColor = TextColor;
                 blockBox.Location = new Point(16, 176);
                 blockBox.Size = new Size(420, 82);
                 blockBox.Multiline = true;
@@ -303,11 +320,13 @@ namespace Prototype1.UI
                 startButton.DialogResult = DialogResult.OK;
                 startButton.Location = new Point(250, 278);
                 startButton.Size = new Size(88, 34);
+                StylePrimaryButton(startButton);
 
                 cancelButton.Text = "취소";
                 cancelButton.DialogResult = DialogResult.Cancel;
                 cancelButton.Location = new Point(348, 278);
                 cancelButton.Size = new Size(88, 34);
+                AlertDialog.StyleButton(cancelButton, false, true);
 
                 dialog.Controls.Add(goalLabel);
                 dialog.Controls.Add(goalBox);
