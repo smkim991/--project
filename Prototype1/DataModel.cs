@@ -56,6 +56,25 @@ namespace Prototype1
 
         public static string CurrentFocusCategory { get; set; } = string.Empty;
 
+        private static List<FocusTaskProgress> _currentFocusTasks = new List<FocusTaskProgress>();
+
+        public static List<FocusTaskProgress> GetCurrentFocusTasksCopy()
+        {
+            return CloneFocusTasks(_currentFocusTasks);
+        }
+
+        public static void SetCurrentFocusTasks(IEnumerable<FocusTaskProgress> tasks)
+        {
+            _currentFocusTasks = CloneFocusTasks(tasks);
+            SaveToJson();
+        }
+
+        public static void ClearCurrentFocusTasks()
+        {
+            _currentFocusTasks = new List<FocusTaskProgress>();
+            SaveToJson();
+        }
+
         public static bool IsEmergencyLockedOut
         {
             get { return DateTime.Now < EmergencyLockUntil; }
@@ -130,6 +149,7 @@ namespace Prototype1
             SkipNextFocusEndCheck = false;
             CurrentFocusGoal = string.Empty;
             CurrentFocusCategory = string.Empty;
+            _currentFocusTasks = new List<FocusTaskProgress>();
             SaveToJson();
         }
 
@@ -191,8 +211,17 @@ namespace Prototype1
             FocusSessionTelemetry.CompleteSession(DateTime.Now);
             CurrentFocusGoal = string.Empty;
             CurrentFocusCategory = string.Empty;
+            _currentFocusTasks = new List<FocusTaskProgress>();
             SaveToJson();
             return true;
+        }
+
+        public sealed class FocusTaskProgress
+        {
+            public string Text { get; set; } = string.Empty;
+            public bool IsCompleted { get; set; }
+            public string SourceFilePath { get; set; } = string.Empty;
+            public int SourceLineIndex { get; set; } = -1;
         }
 
         private class AppData
@@ -209,6 +238,7 @@ namespace Prototype1
             public DateTime EmergencyLockUntil { get; set; }
             public DateTime LastResetTime { get; set; }
             public bool SkipNextFocusEndCheck { get; set; }
+            public List<FocusTaskProgress> CurrentFocusTasks { get; set; }
         }
 
         // 현재 DataModel 속성 값들을 JSON 파일에 저장
@@ -229,7 +259,8 @@ namespace Prototype1
                     Life = Life,
                     EmergencyLockUntil = EmergencyLockUntil,
                     LastResetTime = LastResetTime,
-                    SkipNextFocusEndCheck = SkipNextFocusEndCheck
+                    SkipNextFocusEndCheck = SkipNextFocusEndCheck,
+                    CurrentFocusTasks = CloneFocusTasks(_currentFocusTasks)
                 };
 
                 string jsonString = JsonSerializer.Serialize(saveData, new JsonSerializerOptions { WriteIndented = true });
@@ -272,6 +303,7 @@ namespace Prototype1
                         ? DateTime.Now
                         : loadedData.LastResetTime;
                     SkipNextFocusEndCheck = loadedData.SkipNextFocusEndCheck;
+                    _currentFocusTasks = CloneFocusTasks(loadedData.CurrentFocusTasks);
                 }
 
                 CheckMidnightReset();
@@ -330,6 +362,7 @@ namespace Prototype1
             EmergencyLockUntil = DateTime.MinValue;
             LastResetTime = DateTime.Now;
             SkipNextFocusEndCheck = false;
+            _currentFocusTasks = new List<FocusTaskProgress>();
         }
 
         private static Dictionary<string, List<string>> CloneBlockProfiles(Dictionary<string, List<string>> source)
@@ -346,6 +379,33 @@ namespace Prototype1
                 clone[profile.Key] = profile.Value == null
                     ? new List<string>()
                     : new List<string>(profile.Value);
+            }
+
+            return clone;
+        }
+
+        private static List<FocusTaskProgress> CloneFocusTasks(IEnumerable<FocusTaskProgress> source)
+        {
+            List<FocusTaskProgress> clone = new List<FocusTaskProgress>();
+            if (source == null)
+            {
+                return clone;
+            }
+
+            foreach (FocusTaskProgress task in source)
+            {
+                if (task == null || string.IsNullOrWhiteSpace(task.Text))
+                {
+                    continue;
+                }
+
+                clone.Add(new FocusTaskProgress
+                {
+                    Text = task.Text.Trim(),
+                    IsCompleted = task.IsCompleted,
+                    SourceFilePath = task.SourceFilePath ?? string.Empty,
+                    SourceLineIndex = task.SourceLineIndex
+                });
             }
 
             return clone;

@@ -46,6 +46,7 @@ namespace Prototype1.UI
 
             DataModel.CurrentFocusGoal = draft.Goal;
             DataModel.CurrentFocusCategory = draft.Category;
+            DataModel.SetCurrentFocusTasks(ExtractFocusTasks(txtMemo.Text));
             DataModel.SetActiveBlockListForCategory(draft.Category);
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(draft.DurationMinutes));
 
@@ -63,6 +64,37 @@ namespace Prototype1.UI
                 DurationMinutes = ExtractDurationMinutes(text),
                 Category = RecommendCategory(text)
             };
+        }
+
+        private List<DataModel.FocusTaskProgress> ExtractFocusTasks(string planText)
+        {
+            List<DataModel.FocusTaskProgress> tasks = new List<DataModel.FocusTaskProgress>();
+            string[] lines = (planText ?? string.Empty).Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                Match taskMatch = Regex.Match(lines[i], @"^\s*[-*+]\s+\[( |x|X)\]\s+(.+)$");
+                if (!taskMatch.Success)
+                {
+                    continue;
+                }
+
+                string taskText = taskMatch.Groups[2].Value.Trim();
+                if (string.IsNullOrWhiteSpace(taskText))
+                {
+                    continue;
+                }
+
+                tasks.Add(new DataModel.FocusTaskProgress
+                {
+                    Text = taskText,
+                    IsCompleted = !taskMatch.Groups[1].Value.Equals(" ", StringComparison.Ordinal),
+                    SourceFilePath = currentFilePath ?? string.Empty,
+                    SourceLineIndex = i
+                });
+            }
+
+            return tasks;
         }
 
         private string ExtractGoal(string planText)

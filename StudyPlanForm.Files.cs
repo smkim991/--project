@@ -15,35 +15,117 @@ namespace Prototype1.UI
 
         private void EnsureDefaultStudyFile()
         {
-            string defaultFilePath = Path.Combine(defaultStudyFolderPath, "학습 메모.txt");
+            string tutorialFilePath = Path.Combine(defaultStudyFolderPath, TutorialStudyFileName);
+            string defaultMemoFilePath = Path.Combine(defaultStudyFolderPath, "학습 메모.txt");
             string legacyWorkspaceMemoPath = Path.Combine(studyWorkspacePath, "학습 메모.txt");
 
-            if (File.Exists(defaultFilePath))
+            if (File.Exists(legacyWorkspaceMemoPath) && !File.Exists(defaultMemoFilePath))
             {
-                return;
-            }
-
-            if (File.Exists(legacyWorkspaceMemoPath))
-            {
-                File.Move(legacyWorkspaceMemoPath, defaultFilePath);
-                return;
+                File.Move(legacyWorkspaceMemoPath, defaultMemoFilePath);
             }
 
             string legacyMemoPath = Path.Combine(Application.UserAppDataPath, LegacyMemoFileName);
-            string initialText = string.Empty;
-            if (File.Exists(legacyMemoPath))
+            if (File.Exists(legacyMemoPath) && !File.Exists(defaultMemoFilePath))
             {
                 try
                 {
-                    initialText = File.ReadAllText(legacyMemoPath);
+                    File.WriteAllText(defaultMemoFilePath, File.ReadAllText(legacyMemoPath));
                 }
                 catch
                 {
-                    initialText = string.Empty;
+                    File.WriteAllText(defaultMemoFilePath, string.Empty);
                 }
             }
 
-            File.WriteAllText(defaultFilePath, initialText);
+            if (!File.Exists(tutorialFilePath))
+            {
+                File.WriteAllText(tutorialFilePath, BuildTutorialStudyPlanText());
+            }
+            else
+            {
+                EnsureTutorialGuideCurrent(tutorialFilePath);
+            }
+        }
+
+        private string BuildTutorialStudyPlanText()
+        {
+            return "# 목표 : 학습 계획 기능 익히기\r\n" +
+                   "\r\n" +
+                   "이 파일은 학습 계획을 더 알차게 쓰기 위한 튜토리얼입니다. 자유롭게 수정하거나 삭제해도 됩니다.\r\n" +
+                   "\r\n" +
+                   "## 목표 작성\r\n" +
+                   "# 목표 : 라고 작성하면 목표를 자동으로 인식합니다!\r\n" +
+                   "\r\n" +
+                   "예시:\r\n" +
+                   "# 목표 : 운영체제 강의 3강 듣고 핵심 개념 정리하기\r\n" +
+                   "\r\n" +
+                   BuildTutorialShortcutGuideText() +
+                   "\r\n" +
+                   "## 진행 상황 체크\r\n" +
+                   "- [ ] 를 이용하면 학습 중간 진행 현황을 확인하는 데 도움이 됩니다.\r\n" +
+                   "- [ ] 강의 자료 훑어보기\r\n" +
+                   "- [ ] 핵심 개념 5개 정리하기\r\n" +
+                   "- [ ] 이해가 안 된 부분 질문으로 남기기\r\n" +
+                   "- [ ] 마지막 5분 동안 오늘 배운 내용 요약하기\r\n" +
+                   "\r\n" +
+                   "완료한 항목은 이렇게 바꿀 수 있습니다.\r\n" +
+                   "- [x] 예시 완료 항목\r\n" +
+                   "\r\n" +
+                   "집중 세션을 시작하면 이 체크박스 목록이 현재 세션의 태스크로 사용됩니다.\r\n" +
+                   "집중모드 정지 창에서도 체크 상태를 바꿔 진행도를 표시할 수 있습니다.\r\n" +
+                   "\r\n" +
+                   "## 추천 작성 예시\r\n" +
+                   "# 목표 : 데이터베이스 정규화 복습과 기출 풀이\r\n" +
+                   "- [ ] 1정규형부터 BCNF까지 개념 정리\r\n" +
+                   "- [ ] 기출 문제 10개 풀기\r\n" +
+                   "- [ ] 틀린 문제 원인 적기\r\n";
+        }
+
+        private string BuildTutorialShortcutGuideText()
+        {
+            return "## 편집 단축키\r\n" +
+                   "Ctrl + A를 누르면 현재 위치에 - [ ] 체크박스 태스크가 자동으로 추가됩니다.\r\n" +
+                   "Ctrl + E를 누르면 마크다운 미리보기와 원문 편집 화면을 전환할 수 있습니다.\r\n";
+        }
+
+        private void EnsureTutorialGuideCurrent(string tutorialFilePath)
+        {
+            try
+            {
+                string tutorialText = File.ReadAllText(tutorialFilePath);
+                string updatedText = RemoveLegacyTutorialTimeAndModeGuide(tutorialText);
+
+                if (!updatedText.Contains("Ctrl + A"))
+                {
+                    updatedText = updatedText.TrimEnd() + "\r\n\r\n" + BuildTutorialShortcutGuideText();
+                }
+
+                if (!string.Equals(tutorialText, updatedText, StringComparison.Ordinal))
+                {
+                    File.WriteAllText(tutorialFilePath, updatedText);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private string RemoveLegacyTutorialTimeAndModeGuide(string tutorialText)
+        {
+            string updatedText = tutorialText ?? string.Empty;
+            string legacyGuide =
+                "## 시간과 카테고리 힌트\r\n" +
+                "시간 : 50분\r\n" +
+                "모드 : 대학생\r\n" +
+                "\r\n" +
+                "시간을 적어두면 집중 시작 창에서 예상 시간을 더 쉽게 잡을 수 있습니다.\r\n" +
+                "모드는 대학생, 개발자, 영상편집자, 수험생 또는 직접 만든 카테고리 이름을 적을 수 있습니다.\r\n" +
+                "\r\n";
+
+            updatedText = updatedText.Replace(legacyGuide, string.Empty);
+            updatedText = updatedText.Replace("시간 : 90분\r\n모드 : 수험생\r\n\r\n", string.Empty);
+            updatedText = updatedText.Replace("시간 : 90분\n모드 : 수험생\n\n", string.Empty);
+            return updatedText;
         }
 
         private void RefreshStudyTree()
@@ -219,6 +301,21 @@ namespace Prototype1.UI
             {
                 studyTreeView.SelectedNode = firstFile;
             }
+        }
+
+        private void SelectInitialStudyFile()
+        {
+            string tutorialPath = Path.Combine(defaultStudyFolderPath, TutorialStudyFileName);
+            if (File.Exists(tutorialPath))
+            {
+                SelectPath(tutorialPath);
+                if (studyTreeView.SelectedNode != null)
+                {
+                    return;
+                }
+            }
+
+            SelectFirstFileNode();
         }
 
         private TreeNode FindFirstFileNode(TreeNode node)

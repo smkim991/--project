@@ -17,7 +17,83 @@ namespace Prototype1.UI
                 return true;
             }
 
+            if (keyData == (Keys.Control | Keys.A))
+            {
+                InsertTaskCheckboxLine();
+                return true;
+            }
+
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void InsertTaskCheckboxLine()
+        {
+            if (!CanInsertTaskCheckbox())
+            {
+                return;
+            }
+
+            if (isMarkdownPreviewMode)
+            {
+                SetMarkdownPreviewMode(false);
+            }
+
+            txtMemo.Focus();
+
+            string text = txtMemo.Text ?? string.Empty;
+            int selectionStart = Math.Max(0, Math.Min(txtMemo.SelectionStart, text.Length));
+            int lineStart = FindLineStart(text, selectionStart);
+            int lineEnd = FindLineEnd(text, selectionStart);
+            int lineContentEnd = lineEnd > lineStart && text[lineEnd - 1] == '\r' ? lineEnd - 1 : lineEnd;
+            string currentLine = text.Substring(lineStart, Math.Max(0, lineContentEnd - lineStart));
+
+            int insertIndex;
+            string insertion;
+            if (string.IsNullOrWhiteSpace(currentLine) || selectionStart == lineStart)
+            {
+                insertIndex = lineStart;
+                insertion = "- [ ] ";
+            }
+            else
+            {
+                insertIndex = lineContentEnd;
+                insertion = Environment.NewLine + "- [ ] ";
+            }
+
+            txtMemo.Select(insertIndex, 0);
+            txtMemo.SelectedText = insertion;
+            txtMemo.SelectionStart = insertIndex + insertion.Length;
+        }
+
+        private bool CanInsertTaskCheckbox()
+        {
+            return txtMemo != null &&
+                   txtMemo.Enabled &&
+                   !txtMemo.ReadOnly &&
+                   !string.IsNullOrWhiteSpace(currentFilePath);
+        }
+
+        private int FindLineStart(string text, int selectionStart)
+        {
+            if (string.IsNullOrEmpty(text) || selectionStart <= 0)
+            {
+                return 0;
+            }
+
+            int searchStart = Math.Min(selectionStart - 1, text.Length - 1);
+            int lineStart = text.LastIndexOf('\n', searchStart);
+            return lineStart < 0 ? 0 : lineStart + 1;
+        }
+
+        private int FindLineEnd(string text, int selectionStart)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return 0;
+            }
+
+            int lineEnd = text.IndexOf('\n', Math.Min(selectionStart, text.Length));
+            return lineEnd < 0 ? text.Length : lineEnd;
         }
 
         private void ToggleMarkdownPreview()

@@ -10,6 +10,7 @@ namespace Prototype1.UI
     {
         private const string StudyWorkspaceFolderName = "StudyWorkspace";
         private const string DefaultStudyFolderName = "학습 자료";
+        private const string TutorialStudyFileName = "학습 계획 사용법.txt";
         private const string LegacyMemoFileName = "StudyPlanMemo.txt";
 
         private enum StudyTreeSortMode
@@ -708,7 +709,7 @@ namespace Prototype1.UI
         private void StudyPlanForm_Load(object sender, EventArgs e)
         {
             RefreshStudyTree();
-            SelectFirstFileNode();
+            SelectInitialStudyFile();
             RefreshDashboard();
         }
 

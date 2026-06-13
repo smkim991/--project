@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Prototype1.UI;
 
@@ -453,6 +455,7 @@ namespace Prototype1
 
         private void StartFocusSession(int totalMinutes, string successMessage)
         {
+            DataModel.ClearCurrentFocusTasks();
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(totalMinutes));
 
             if (!blockingtimer.Enabled)
@@ -839,9 +842,14 @@ namespace Prototype1
         {
             StopRequestAction selectedAction = StopRequestAction.Cancel;
             int secondsLeft = DataModel.STOP_COUNTDOWN_SECONDS;
+            List<DataModel.FocusTaskProgress> focusTasks = DataModel.GetCurrentFocusTasksCopy();
+            bool showEmergencyButton = DataModel.Life > 0 && DataModel.Life <= 1;
 
             Form dialog = new Form();
             Label descriptionLabel = new Label();
+            Label progressTitleLabel = new Label();
+            CheckedListBox taskList = new CheckedListBox();
+            Label emptyTaskLabel = new Label();
             Button useLifeButton = new Button();
             Button cancelButton = new Button();
             Button emergencyButton = null;
@@ -849,17 +857,58 @@ namespace Prototype1
 
             AlertDialog.ApplyDialogTheme(dialog);
             dialog.Text = "집중모드 정지";
-            // Life == 0이면 긴급 종료 버튼이 없으므로 다이얼로그 크기를 조절
-            dialog.ClientSize = (DataModel.Life > 0 && DataModel.Life <= 1) ? new Size(480, 220) : new Size(480, 185);
+            dialog.ClientSize = new Size(560, showEmergencyButton ? 395 : 360);
 
             descriptionLabel.Location = new Point(18, 18);
-            descriptionLabel.Size = new Size(444, 98);
+            descriptionLabel.Size = new Size(524, 82);
             descriptionLabel.Text = BuildStopDialogMessage(secondsLeft);
             descriptionLabel.BackColor = AlertDialog.AppBackColor;
             descriptionLabel.ForeColor = AlertDialog.SubtleTextColor;
             descriptionLabel.Font = new Font("맑은 고딕", 10F, FontStyle.Regular);
 
-            useLifeButton.Location = new Point(18, (DataModel.Life > 0 && DataModel.Life <= 1) ? 130 : 120);
+            progressTitleLabel.Location = new Point(18, 112);
+            progressTitleLabel.Size = new Size(524, 24);
+            progressTitleLabel.Text = "현재 세션 진행상황";
+            progressTitleLabel.BackColor = AlertDialog.AppBackColor;
+            progressTitleLabel.ForeColor = AlertDialog.TextColor;
+            progressTitleLabel.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
+
+            taskList.CheckOnClick = true;
+            taskList.BackColor = AlertDialog.FieldColor;
+            taskList.BorderStyle = BorderStyle.FixedSingle;
+            taskList.ForeColor = AlertDialog.TextColor;
+            taskList.Font = new Font("맑은 고딕", 9F, FontStyle.Regular);
+            taskList.HorizontalScrollbar = true;
+            taskList.Location = new Point(18, 142);
+            taskList.Size = new Size(524, showEmergencyButton ? 178 : 143);
+
+            foreach (DataModel.FocusTaskProgress task in focusTasks)
+            {
+                taskList.Items.Add(task.Text, task.IsCompleted);
+            }
+
+            taskList.ItemCheck += delegate(object sender, ItemCheckEventArgs e)
+            {
+                if (e.Index < 0 || e.Index >= focusTasks.Count)
+                {
+                    return;
+                }
+
+                focusTasks[e.Index].IsCompleted = e.NewValue == CheckState.Checked;
+                SaveFocusTaskProgress(focusTasks);
+            };
+
+            emptyTaskLabel.Location = new Point(18, 142);
+            emptyTaskLabel.Size = new Size(524, 70);
+            emptyTaskLabel.Text = "현재 세션에 등록된 체크박스 태스크가 없습니다.\r\n학습 계획에 - [ ] 형식으로 태스크를 작성하면 여기에 표시됩니다.";
+            emptyTaskLabel.BackColor = AlertDialog.FieldColor;
+            emptyTaskLabel.ForeColor = AlertDialog.SubtleTextColor;
+            emptyTaskLabel.Font = new Font("맑은 고딕", 9F, FontStyle.Regular);
+            emptyTaskLabel.Padding = new Padding(10);
+
+            int buttonY = dialog.ClientSize.Height - 56;
+
+            useLifeButton.Location = new Point(18, buttonY);
             useLifeButton.Size = new Size(150, 38);
             useLifeButton.Enabled = false;
             useLifeButton.Text = $"대기 중 {secondsLeft}초";
@@ -870,7 +919,7 @@ namespace Prototype1
                 dialog.Close();
             };
 
-            cancelButton.Location = new Point((DataModel.Life > 0 && DataModel.Life <= 1) ? 342 : 312, (DataModel.Life > 0 && DataModel.Life <= 1) ? 130 : 120);
+            cancelButton.Location = new Point(dialog.ClientSize.Width - 138, buttonY);
             cancelButton.Size = new Size(120, 38);
             cancelButton.Text = "취소";
             AlertDialog.StyleButton(cancelButton, false, true);
@@ -881,13 +930,23 @@ namespace Prototype1
             };
 
             dialog.Controls.Add(descriptionLabel);
+            dialog.Controls.Add(progressTitleLabel);
+            if (focusTasks.Count > 0)
+            {
+                dialog.Controls.Add(taskList);
+            }
+            else
+            {
+                dialog.Controls.Add(emptyTaskLabel);
+            }
+
             dialog.Controls.Add(useLifeButton);
             dialog.Controls.Add(cancelButton);
 
-            if (DataModel.Life > 0 && DataModel.Life <= 1) // 마지막 라이프가 남았을 때만 긴급 종료 버튼 표시 (Life==1일 때)
+            if (showEmergencyButton)
             {
                 emergencyButton = new Button();
-                emergencyButton.Location = new Point(184, 130);
+                emergencyButton.Location = new Point(184, buttonY);
                 emergencyButton.Size = new Size(142, 38);
                 emergencyButton.Text = "긴급 종료";
                 AlertDialog.StyleButton(emergencyButton, false, true);
@@ -954,6 +1013,69 @@ namespace Prototype1
             }
 
             return message;
+        }
+
+        private void SaveFocusTaskProgress(List<DataModel.FocusTaskProgress> focusTasks)
+        {
+            DataModel.SetCurrentFocusTasks(focusTasks);
+            UpdateFocusTaskSourceFiles(focusTasks);
+        }
+
+        private void UpdateFocusTaskSourceFiles(IEnumerable<DataModel.FocusTaskProgress> focusTasks)
+        {
+            if (focusTasks == null)
+            {
+                return;
+            }
+
+            foreach (IGrouping<string, DataModel.FocusTaskProgress> group in focusTasks
+                         .Where(task => task != null &&
+                                        !string.IsNullOrWhiteSpace(task.SourceFilePath) &&
+                                        task.SourceLineIndex >= 0)
+                         .GroupBy(task => task.SourceFilePath, StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    if (!File.Exists(group.Key))
+                    {
+                        continue;
+                    }
+
+                    string[] lines = File.ReadAllLines(group.Key);
+                    bool changed = false;
+
+                    foreach (DataModel.FocusTaskProgress task in group)
+                    {
+                        if (task.SourceLineIndex < 0 || task.SourceLineIndex >= lines.Length)
+                        {
+                            continue;
+                        }
+
+                        string replacement = "${1}" + (task.IsCompleted ? "x" : " ") + "${3}";
+                        string updatedLine = Regex.Replace(
+                            lines[task.SourceLineIndex],
+                            @"^(\s*[-*+]\s+\[)( |x|X)(\]\s+)",
+                            replacement,
+                            RegexOptions.None,
+                            TimeSpan.FromMilliseconds(100));
+
+                        if (!string.Equals(lines[task.SourceLineIndex], updatedLine, StringComparison.Ordinal))
+                        {
+                            lines[task.SourceLineIndex] = updatedLine;
+                            changed = true;
+                        }
+                    }
+
+                    if (changed)
+                    {
+                        File.WriteAllLines(group.Key, lines);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("태스크 진행 상태 저장 실패: " + ex.Message);
+                }
+            }
         }
 
         private void ConfirmEmergencyStop()
