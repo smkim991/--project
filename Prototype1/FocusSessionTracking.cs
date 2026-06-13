@@ -155,7 +155,7 @@ namespace Prototype1
 
     public static class FocusSessionReportBuilder
     {
-        // 사용자의 앱 사용 로그를 남기기 위해 사용하는 객체, chrome  | 활성 42분 | 휴식 0분 ... 과 같은 방식
+        // 사용자의 앱 사용 로그를 남기기 위해 사용하는 객체, chrome  | 활성 42분 | 일시정지 0분 ... 과 같은 방식
         public static List<AppUsageSummary> BuildAppUsage(FocusSessionRecord session)
         {
             if (session == null || session.Segments == null)
@@ -237,7 +237,7 @@ namespace Prototype1
             builder.AppendLine("카테고리: " + DisplayText(session.Category));
             builder.AppendLine("시간: " + session.StartedAt.ToString("HH:mm") + " - " + session.EndedAt.ToString("HH:mm"));
             builder.AppendLine("활성 집중: " + FormatDuration(session.ActiveSeconds));
-            builder.AppendLine("휴식: " + FormatDuration(session.BreakSeconds));
+            builder.AppendLine("일시정지: " + FormatDuration(session.BreakSeconds));
             builder.AppendLine("앱 전환: " + session.AppSwitchCount);
             return builder.ToString();
         }

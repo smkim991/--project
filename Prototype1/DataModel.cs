@@ -42,8 +42,15 @@ namespace Prototype1
         public static bool SkipNextFocusEndCheck { get; set; } = false;
 
 
-        // 집중 종료 시각 (JSON 저장 X)
+        // 집중 종료 시각
         public static DateTime FocusEndTime = DateTime.MinValue;
+
+        private static TimeSpan _pausedFocusRemainingTime = TimeSpan.Zero;
+
+        public static TimeSpan PausedFocusRemainingTime
+        {
+            get { return _pausedFocusRemainingTime; }
+        }
 
         public static string CurrentFocusGoal { get; set; } = string.Empty;
 
@@ -103,6 +110,8 @@ namespace Prototype1
             IsBlockingActive = true;
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
+            _pausedFocusRemainingTime = TimeSpan.Zero;
+            SkipNextFocusEndCheck = false;
             FocusSessionTelemetry.StartSession(
                 startedAt,
                 CurrentFocusGoal,
@@ -117,6 +126,8 @@ namespace Prototype1
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
+            _pausedFocusRemainingTime = TimeSpan.Zero;
+            SkipNextFocusEndCheck = false;
             CurrentFocusGoal = string.Empty;
             CurrentFocusCategory = string.Empty;
             SaveToJson();
@@ -138,6 +149,10 @@ namespace Prototype1
             BreakEndTime = DateTime.Now.AddMinutes(LIFE_BREAK_MINUTES);
 
             _pausedFocusRemainingTime = FocusEndTime - DateTime.Now;
+            if (_pausedFocusRemainingTime < TimeSpan.Zero)
+            {
+                _pausedFocusRemainingTime = TimeSpan.Zero;
+            }
             FocusEndTime = DateTime.MinValue;
 
             SkipNextFocusEndCheck = false;
@@ -171,7 +186,8 @@ namespace Prototype1
             IsBreakActive = false;
             BreakEndTime = DateTime.MinValue;
             FocusEndTime = DateTime.MinValue;
-            EmergencyLockUntil = Life == 0 ? TodayMidnight : EmergencyLockUntil;
+            _pausedFocusRemainingTime = TimeSpan.Zero;
+            SkipNextFocusEndCheck = false;
             FocusSessionTelemetry.CompleteSession(DateTime.Now);
             CurrentFocusGoal = string.Empty;
             CurrentFocusCategory = string.Empty;
@@ -179,27 +195,10 @@ namespace Prototype1
             return true;
         }
 
-        private static bool TryUseLife()
-        {
-            if (Life == 0)
-            {
-                return false;
-            }
-
-            Life--;
-
-            if (Life == 0)
-            {
-                EmergencyLockUntil = TodayMidnight;
-            }
-
-            SaveToJson();
-            return true;
-        }
-
         private class AppData
         {
             public List<string> SavedBlockList { get; set; }
+            public List<string> SavedWebBlockKeywordList { get; set; }
             public Dictionary<string, List<string>> BlockProfiles { get; set; }
             public bool IsBlockingActive { get; set; }
             public bool IsBreakActive { get; set; }
@@ -219,15 +218,18 @@ namespace Prototype1
             {
                 var saveData = new AppData
                 {
-                    { "SavedBlockList", SavedBlockList },
-                    { "SavedWebBlockKeywordList",SavedWebBlockKeywordList},
-                    { "BlockProfiles", BlockProfiles },
-                    { "IsBlockingActive", IsBlockingActive },
-                    { "IsBreakActive", IsBreakActive },
-                    { "BreakEndTime", BreakEndTime },
-                    { "EmergencyLockUntil", EmergencyLockUntil },
-                    { "Life", Life },
-                    { "LastResetTime", LastResetTime }
+                    SavedBlockList = SavedBlockList,
+                    SavedWebBlockKeywordList = SavedWebBlockKeywordList,
+                    BlockProfiles = BlockProfiles,
+                    IsBlockingActive = IsBlockingActive,
+                    IsBreakActive = IsBreakActive,
+                    FocusEndTime = FocusEndTime,
+                    BreakEndTime = BreakEndTime,
+                    PausedFocusRemainingTime = _pausedFocusRemainingTime,
+                    Life = Life,
+                    EmergencyLockUntil = EmergencyLockUntil,
+                    LastResetTime = LastResetTime,
+                    SkipNextFocusEndCheck = SkipNextFocusEndCheck
                 };
 
                 string jsonString = JsonSerializer.Serialize(saveData, new JsonSerializerOptions { WriteIndented = true });
@@ -256,40 +258,20 @@ namespace Prototype1
 
                 if (loadedData != null)
                 {
-                    if (data.TryGetValue("SavedBlockList", out var blockListEl))
-                        SavedBlockList = JsonSerializer.Deserialize<List<string>>(blockListEl.GetRawText()) ?? new List<string>();
-
-                    if (data.TryGetValue("SavedWebBlockKeywordList", out var keywordListEl))
-                        SavedWebBlockKeywordList = JsonSerializer.Deserialize<List<string>>(keywordListEl.GetRawText()) ?? new List<string>();
-
-                    if (data.TryGetValue("BlockProfiles", out var blockProfilesEl))
-                    {
-                        Dictionary<string, List<string>> loadedProfiles =
-                            JsonSerializer.Deserialize<Dictionary<string, List<string>>>(blockProfilesEl.GetRawText());
-                        BlockProfiles = CloneBlockProfiles(loadedProfiles);
-                    }
-                    else
-                    {
-                        BlockProfiles = CreateDefaultBlockProfiles();
-                    }
-
-                    if (data.TryGetValue("IsBlockingActive", out var activeEl))
-                        IsBlockingActive = activeEl.GetBoolean();
-
-                    if (data.TryGetValue("IsBreakActive", out var breakActiveEl))
-                        IsBreakActive = breakActiveEl.GetBoolean();
-
-                    if (data.TryGetValue("BreakEndTime", out var breakEndEl))
-                        BreakEndTime = breakEndEl.GetDateTime();
-
-                    if (data.TryGetValue("EmergencyLockUntil", out var emergencyLockEl))
-                        EmergencyLockUntil = emergencyLockEl.GetDateTime();
-
-                    if (data.TryGetValue("Life", out var lifeEl))
-                        Life = lifeEl.GetUInt32();
-
-                    if (data.TryGetValue("LastResetTime", out var timeEl))
-                        LastResetTime = timeEl.GetDateTime();
+                    SavedBlockList = loadedData.SavedBlockList ?? new List<string>();
+                    SavedWebBlockKeywordList = loadedData.SavedWebBlockKeywordList ?? new List<string>();
+                    BlockProfiles = CloneBlockProfiles(loadedData.BlockProfiles);
+                    IsBlockingActive = loadedData.IsBlockingActive;
+                    IsBreakActive = loadedData.IsBreakActive;
+                    FocusEndTime = loadedData.FocusEndTime;
+                    BreakEndTime = loadedData.BreakEndTime;
+                    _pausedFocusRemainingTime = loadedData.PausedFocusRemainingTime;
+                    Life = loadedData.Life;
+                    EmergencyLockUntil = loadedData.EmergencyLockUntil;
+                    LastResetTime = loadedData.LastResetTime == DateTime.MinValue
+                        ? DateTime.Now
+                        : loadedData.LastResetTime;
+                    SkipNextFocusEndCheck = loadedData.SkipNextFocusEndCheck;
                 }
 
                 CheckMidnightReset();
@@ -337,25 +319,17 @@ namespace Prototype1
         private static void ResetToInitialState()
         {
             SavedBlockList = new List<string>();
+            SavedWebBlockKeywordList = new List<string>();
             BlockProfiles = CreateDefaultBlockProfiles();
             IsBlockingActive = false;
             IsBreakActive = false;
             FocusEndTime = DateTime.MinValue;
             BreakEndTime = DateTime.MinValue;
             _pausedFocusRemainingTime = TimeSpan.Zero;
-            Life = INITIAL_LIFE_COUNT; // MODIFIED: INITIAL_LIFE_COUNT 사용
+            Life = INITIAL_LIFE_COUNT;
             EmergencyLockUntil = DateTime.MinValue;
             LastResetTime = DateTime.Now;
             SkipNextFocusEndCheck = false;
-        }
-
-        private static void ApplyLifeExhaustionLock()
-        {
-            if (Life == 0 && EmergencyLockUntil < TodayMidnight)
-            {
-                EmergencyLockUntil = TodayMidnight;
-                SaveToJson();
-            }
         }
 
         private static Dictionary<string, List<string>> CloneBlockProfiles(Dictionary<string, List<string>> source)

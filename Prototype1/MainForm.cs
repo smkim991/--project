@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader; // 프로세스 제어를 위한 필수 네임스페이스
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -18,49 +17,205 @@ namespace Prototype1
             EmergencyStop
         }
 
+        private const int TimePickerDropDownVisibleItems = 10;
+        private static readonly Color FocusPanelBackColor = Color.FromArgb(24, 24, 24);
+        private static readonly Color PausePanelBackColor = Color.FromArgb(56, 118, 121);
+
         private Dictionary<string, List<string>> currentBlockedItems;
-        private string currentActiveCategory = "";
 
-        private Dictionary<string, string> processMapping =
-            new Dictionary<string, string>() {
-        { "유튜브", "chrome" }, { "넷플릭스", "chrome" }, { "카카오톡", "KakaoTalk" },{ "틱톡", "TikTok" }, { "인스타그램", "Instagram" } 
-    };
-
-        public MainForm(string currentActiveCategory)
+        private static readonly Dictionary<string, string> BlockedProcessAliases =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            this.currentActiveCategory = currentActiveCategory;
-        }
+            { "유튜브", "chrome" },
+            { "넷플릭스", "chrome" },
+            { "네이버웹툰", "chrome" },
+            { "카카오톡", "KakaoTalk" },
+            { "틱톡", "TikTok" },
+            { "인스타그램", "Instagram" },
+            { "메모장", "notepad" },
+            { "멜론", "Melon" },
+            { "엑셀", "EXCEL" }
+        };
+
+        private static readonly HashSet<string> BrowserProcessNames =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "chrome",
+                "msedge",
+                "whale",
+                "firefox"
+            };
 
         public MainForm()
         {
             InitializeComponent();
+            ConfigureMainScreenLayout();
+        }
 
-            if (!System.ComponentModel.LicenseManager.UsageMode
-                .Equals(System.ComponentModel.LicenseUsageMode.Designtime))
+        private void ConfigureMainScreenLayout()
+        {
+            guna2Panel1.Size = new Size(856, 500);
+            btnActivateBlocking.Size = new Size(320, 68);
+
+            lblShowTimeLeft.AutoSize = false;
+            lblShowTimeLeft.TextAlign = ContentAlignment.MiddleCenter;
+
+            label1.AutoSize = false;
+            label1.TextAlign = ContentAlignment.MiddleCenter;
+            label2.AutoSize = false;
+            label2.TextAlign = ContentAlignment.MiddleCenter;
+            label3.AutoSize = false;
+            label3.TextAlign = ContentAlignment.MiddleCenter;
+            label4.AutoSize = false;
+            label4.TextAlign = ContentAlignment.MiddleCenter;
+            label7.AutoSize = false;
+            label7.TextAlign = ContentAlignment.MiddleCenter;
+
+            btnStopBlocking.TextAlign = ContentAlignment.MiddleCenter;
+            btnActivateBlocking.TextAlign = HorizontalAlignment.Center;
+
+            cmbHour.TextAlign = HorizontalAlignment.Center;
+            cmbMin.TextAlign = HorizontalAlignment.Center;
+            cmbHour.ItemHeight = 34;
+            cmbMin.ItemHeight = 34;
+            cmbHour.DrawItem += timeComboBox_DrawItem;
+            cmbMin.DrawItem += timeComboBox_DrawItem;
+
+            Resize += delegate { ArrangeMainScreenLayout(); };
+            guna2Panel1.Resize += delegate { ArrangeFocusPanelContent(); };
+            ArrangeMainScreenLayout();
+        }
+
+        private void ArrangeMainScreenLayout()
+        {
+            if (guna2Panel1 == null || guna2Panel2 == null || guna2Panel3 == null)
             {
-                LoadBlockProfiles();
+                return;
             }
+
+            int contentLeft = guna2Panel2.Width;
+            int contentTop = guna2Panel3.Height;
+            int contentWidth = Math.Max(0, ClientSize.Width - contentLeft);
+            int contentHeight = Math.Max(0, ClientSize.Height - contentTop);
+
+            guna2Panel1.Location = new Point(
+                contentLeft + Math.Max(0, (contentWidth - guna2Panel1.Width) / 2),
+                contentTop + Math.Max(0, (contentHeight - guna2Panel1.Height) / 2));
+
+            btnStopBlocking.Location = new Point(
+                contentLeft + Math.Max(0, contentWidth - btnStopBlocking.Width - 98),
+                Math.Max(contentTop, ClientSize.Height - btnStopBlocking.Height - 106));
+
+            ArrangeFocusPanelContent();
+        }
+
+        private void ArrangeFocusPanelContent()
+        {
+            if (guna2Panel1 == null)
+            {
+                return;
+            }
+
+            int panelWidth = guna2Panel1.Width;
+            int panelHeight = guna2Panel1.Height;
+            int contentInset = 34;
+            int contentWidth = Math.Max(120, panelWidth - (contentInset * 2));
+            int rowHeight = 44;
+            int buttonY = Math.Max(370, panelHeight - btnActivateBlocking.Height - 36);
+            int rowY = buttonY - 88;
+
+            lblShowTimeLeft.Location = new Point(0, 40);
+            lblShowTimeLeft.Size = new Size(panelWidth, 124);
+
+            label4.Location = new Point(contentInset, 178);
+            label4.Size = new Size(contentWidth, 50);
+
+            label7.Location = new Point(contentInset, 240);
+            label7.Size = new Size(contentWidth, 42);
+
+            int titleWidth = 112;
+            int comboWidth = 140;
+            int unitWidth = 44;
+            int minuteUnitWidth = 34;
+            int gap = 12;
+            int wideGap = 22;
+            int groupWidth = titleWidth + gap + comboWidth + gap + unitWidth + wideGap + comboWidth + gap + minuteUnitWidth;
+            int groupX = Math.Max(contentInset, (panelWidth - groupWidth) / 2);
+
+            label1.Location = new Point(groupX, rowY);
+            label1.Size = new Size(titleWidth, rowHeight);
+            cmbHour.Location = new Point(groupX + titleWidth + gap, rowY);
+            cmbHour.Size = new Size(comboWidth, rowHeight);
+            label2.Location = new Point(cmbHour.Right + gap, rowY);
+            label2.Size = new Size(unitWidth, rowHeight);
+            cmbMin.Location = new Point(label2.Right + wideGap, rowY);
+            cmbMin.Size = new Size(comboWidth, rowHeight);
+            label3.Location = new Point(cmbMin.Right + gap, rowY);
+            label3.Size = new Size(minuteUnitWidth, rowHeight);
+
+            btnActivateBlocking.Location = new Point((panelWidth - btnActivateBlocking.Width) / 2, buttonY);
+        }
+
+        private void timeComboBox_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            Guna.UI2.WinForms.Guna2ComboBox comboBox = sender as Guna.UI2.WinForms.Guna2ComboBox;
+            if (comboBox == null || e.Index < 0)
+            {
+                return;
+            }
+
+            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            using (SolidBrush background = new SolidBrush(selected ? Color.FromArgb(139, 92, 246) : Color.FromArgb(35, 35, 35)))
+            {
+                e.Graphics.FillRectangle(background, e.Bounds);
+            }
+
+            TextRenderer.DrawText(
+                e.Graphics,
+                comboBox.Items[e.Index].ToString(),
+                comboBox.Font,
+                e.Bounds,
+                Color.White,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+
+            e.DrawFocusRectangle();
         }
 
         private void LoadBlockProfiles() { currentBlockedItems = DataModel.GetBlockProfilesCopy(); }
 
-        public void KillProcesses(List<string> blockList)
+        private void KillProcesses(IEnumerable<string> blockList)
         {
+            if (blockList == null)
+            {
+                return;
+            }
+
+            int currentProcessId;
+            using (Process currentProcess = Process.GetCurrentProcess())
+            {
+                currentProcessId = currentProcess.Id;
+            }
+
             foreach (string processName in blockList)
             {
+                if (string.IsNullOrWhiteSpace(processName))
+                {
+                    continue;
+                }
+
                 Process[] processes = Process.GetProcessesByName(processName);
 
                 foreach (Process p in processes)
                 {
                     try
                     {
-                        if (p.Id == Process.GetCurrentProcess().Id)
+                        if (p.Id == currentProcessId)
                         {
                             continue;
                         }
 
                         p.Kill();
-                        p.WaitForExit();
+                        p.WaitForExit(1000);
                         Console.WriteLine($"{processName} 차단 완료!");
                     }
                     catch (Exception ex)
@@ -69,35 +224,18 @@ namespace Prototype1
                     }
                     finally
                     {
-                        if (p != null && !p.HasExited) // NEW: 프로세스가 아직 실행 중이면 Dispose() 호출 전 안전하게 종료 시도
-                            {
-                                try { p.Kill(); } catch { }
-                            }
                         p?.Dispose();
                     }
                 }
             }
         }
 
-        /*private void btnExit_Click(object sender, EventArgs e)
-        {
-            if (DataModel.IsBlockingActive)
-            {
-                MessageBox.Show("집중모드가 실행 중입니다. 종료하려면 먼저 집중모드를 정지해 주세요.");
-            }
-            else
-            {
-                this.Close();
-            }
-        }*/
-
         private void btnCategorySettings_Click(object sender, EventArgs e)
         {
-            using (CategorySettingsForm2 categorySettingsForm2 = new CategorySettingsForm2(currentBlockedItems, this))
+            using (CategorySettingsForm categorySettingsForm = new CategorySettingsForm(currentBlockedItems, this))
             {
                 categorySettingsForm.ShowDialog(this);
-                LoadBlockProfiles(); // MODIFIED: CategorySettingsForm에서 변경사항이 저장될 수 있으므로, 다시 로드
-                categorySettingsForm2.ShowDialog(this);
+                LoadBlockProfiles();
             }
         }
 
@@ -127,7 +265,7 @@ namespace Prototype1
                     }
 
                     UpdateBlockingUi();
-                    MessageBox.Show("계획 기반 집중 세션을 시작했습니다.");
+                    AlertDialog.Show(this, "계획 기반 집중 세션을 시작했습니다.");
                 }
             }
         }
@@ -139,10 +277,10 @@ namespace Prototype1
                 // 집중모드 활성화 상태에서 버튼 클릭 시
                 if (DataModel.IsBreakActive)
                 {
-                    // 자유시간 중이라면 "집중모드 재개" 기능 수행
-                    DataModel.EndLifeBreak(); // 자유시간 종료 및 집중모드 재개
+                    // 일시정지 중이라면 "집중모드 재개" 기능 수행
+                    DataModel.EndLifeBreak(); // 일시정지 종료 및 집중모드 재개
                     UpdateBlockingUi();
-                    MessageBox.Show("집중모드가 재개되었습니다!");
+                    AlertDialog.Show(this, "집중모드가 재개되었습니다!");
                 }
                 else
                 {
@@ -155,47 +293,14 @@ namespace Prototype1
             // 집중모드 비활성화 상태에서 버튼 클릭 시 (새 집중모드 시작)
             if (DataModel.IsEmergencyLockedOut)
             {
-                MessageBox.Show($"라이프를 모두 소진해 {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
+                AlertDialog.Show(this, $"라이프를 모두 소진해 {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
                 UpdateBlockingUi();
                 return;
             }
 
-            string hourInput = cmbHour.Text;
-            string minInput = cmbMin.Text;
-
-            int hours = 0;
-            int minutes = 0;
-
-            if (!string.IsNullOrEmpty(hourInput) && !int.TryParse(hourInput, out hours))
+            int totalMinutes;
+            if (!TryGetFocusDuration(cmbHour.Text, cmbMin.Text, out totalMinutes, true))
             {
-                MessageBox.Show("시간에 올바른 숫자를 입력해 주세요!");
-                return;
-            }
-
-            // minInput 처리 로직을 수정하여 "00"을 0으로 제대로 파싱하고, 비어있는 경우 메시지를 표시
-            if (!string.IsNullOrEmpty(minInput))
-            {
-                if (minInput == "00")
-                {
-                    minutes = 0;
-                }
-                else if (!int.TryParse(minInput, out minutes))
-                {
-                    MessageBox.Show("분에 올바른 숫자를 입력해 주세요!");
-                    return;
-                }
-            }
-            else
-            {
-                MessageBox.Show("분을 선택해 주세요!"); // 분이 비어있을 경우 메시지
-                return;
-            }
-
-
-            int totalMinutes = (hours * 60) + minutes;
-            if (totalMinutes <= 0)
-            {
-                MessageBox.Show("집중 시간은 1분 이상으로 설정해 주세요.");
                 return;
             }
 
@@ -209,6 +314,145 @@ namespace Prototype1
                 DataModel.CurrentFocusCategory = "직접 시작";
             }
 
+            StartFocusSession(totalMinutes, "차단이 시작되었습니다!");
+        }
+
+        public bool PromptAndStartFocusSessionFromCategory()
+        {
+            if (DataModel.IsBlockingActive)
+            {
+                AlertDialog.Show(this, "이미 집중모드가 실행 중입니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return false;
+            }
+
+            if (DataModel.IsEmergencyLockedOut)
+            {
+                AlertDialog.Show(this, $"라이프를 모두 소진해 {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
+                UpdateBlockingUi();
+                return false;
+            }
+
+            int totalMinutes;
+            if (!ShowCategoryFocusStartDialog(out totalMinutes))
+            {
+                return false;
+            }
+
+            StartFocusSession(totalMinutes, "차단이 시작되었습니다!");
+            return true;
+        }
+
+        private bool ShowCategoryFocusStartDialog(out int totalMinutes)
+        {
+            totalMinutes = 0;
+
+            using (Form dialog = new Form())
+            using (Label promptLabel = new Label())
+            using (Label hourLabel = new Label())
+            using (ComboBox hourBox = new ComboBox())
+            using (Label minLabel = new Label())
+            using (ComboBox minBox = new ComboBox())
+            using (Button startButton = new Button())
+            using (Button cancelButton = new Button())
+            {
+                dialog.Text = "집중 세션 시작";
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dialog.MaximizeBox = false;
+                dialog.MinimizeBox = false;
+                dialog.BackColor = Color.FromArgb(18, 18, 18);
+                dialog.ForeColor = Color.White;
+                dialog.ClientSize = new Size(430, 205);
+
+                promptLabel.Text = "집중세션을 시작하시겠습니까?";
+                promptLabel.Font = new Font("맑은 고딕", 12F, FontStyle.Bold);
+                promptLabel.ForeColor = Color.White;
+                promptLabel.Location = new Point(20, 20);
+                promptLabel.Size = new Size(390, 34);
+
+                hourLabel.Text = "시간";
+                hourLabel.ForeColor = Color.White;
+                hourLabel.Location = new Point(22, 76);
+                hourLabel.Size = new Size(58, 26);
+                hourLabel.TextAlign = ContentAlignment.MiddleLeft;
+
+                hourBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                hourBox.BackColor = Color.FromArgb(35, 35, 35);
+                hourBox.ForeColor = Color.White;
+                hourBox.Location = new Point(82, 76);
+                hourBox.Size = new Size(100, 26);
+
+                minLabel.Text = "분";
+                minLabel.ForeColor = Color.White;
+                minLabel.Location = new Point(212, 76);
+                minLabel.Size = new Size(42, 26);
+                minLabel.TextAlign = ContentAlignment.MiddleLeft;
+
+                minBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                minBox.BackColor = Color.FromArgb(35, 35, 35);
+                minBox.ForeColor = Color.White;
+                minBox.Location = new Point(258, 76);
+                minBox.Size = new Size(100, 26);
+
+                for (int i = 0; i <= 23; i++)
+                {
+                    hourBox.Items.Add(i.ToString());
+                }
+
+                for (int i = 0; i <= 59; i++)
+                {
+                    minBox.Items.Add(i.ToString("D2"));
+                }
+
+                ConfigureTimePickerDropDown(hourBox);
+                ConfigureTimePickerDropDown(minBox);
+                SelectTimePickerValue(hourBox, cmbHour.Text, "1");
+                SelectTimePickerValue(minBox, cmbMin.Text, "00");
+
+                startButton.Text = "시작";
+                startButton.DialogResult = DialogResult.OK;
+                startButton.BackColor = Color.FromArgb(139, 92, 246);
+                startButton.FlatAppearance.BorderSize = 0;
+                startButton.FlatStyle = FlatStyle.Flat;
+                startButton.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
+                startButton.ForeColor = Color.White;
+                startButton.Location = new Point(226, 143);
+                startButton.Size = new Size(88, 38);
+
+                cancelButton.Text = "취소";
+                cancelButton.DialogResult = DialogResult.Cancel;
+                cancelButton.Location = new Point(322, 143);
+                cancelButton.Size = new Size(88, 38);
+                AlertDialog.StyleButton(cancelButton, false, true);
+
+                dialog.Controls.Add(promptLabel);
+                dialog.Controls.Add(hourLabel);
+                dialog.Controls.Add(hourBox);
+                dialog.Controls.Add(minLabel);
+                dialog.Controls.Add(minBox);
+                dialog.Controls.Add(startButton);
+                dialog.Controls.Add(cancelButton);
+                dialog.AcceptButton = startButton;
+                dialog.CancelButton = cancelButton;
+
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return false;
+                }
+
+                if (!TryGetFocusDuration(hourBox.Text, minBox.Text, out totalMinutes, true))
+                {
+                    return false;
+                }
+
+                SelectTimePickerValue(cmbHour, NormalizeHourText(hourBox.Text), "1");
+                SelectTimePickerValue(cmbMin, NormalizeMinuteText(minBox.Text), "00");
+                return true;
+            }
+        }
+
+        private void StartFocusSession(int totalMinutes, string successMessage)
+        {
             DataModel.StartFocusSession(DateTime.Now.AddMinutes(totalMinutes));
 
             if (!blockingtimer.Enabled)
@@ -217,7 +461,7 @@ namespace Prototype1
             }
 
             UpdateBlockingUi();
-            MessageBox.Show("차단이 시작되었습니다!");
+            AlertDialog.Show(this, successMessage);
         }
 
         private void blockingtimer_Tick(object sender, EventArgs e)
@@ -229,140 +473,112 @@ namespace Prototype1
 
             FocusSessionTelemetry.CaptureTick();
 
-            if (DateTime.Now >= DataModel.FocusEndTime)
-            {
-                blockingtimer.Stop();
-                DataModel.CompleteFocusSession();
-                lblShowTimeLeft.Text = "00시간 00분 00초";
-                UpdateBlockingUi();
-                ShowLastSessionReport();
-                MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
-                return;
-            }
-
             if (DataModel.IsBreakActive)
             {
-                if (DateTime.Now >= DataModel.BreakEndTime)
-                {
-                    DataModel.EndLifeBreak();
-                    UpdateBlockingUi();
-
-                    if (DataModel.Life == 0 && DataModel.IsEmergencyLockedOut)
-                    {
-                        blockingtimer.Stop();
-                        DataModel.CompleteFocusSession();
-                        lblShowTimeLeft.Text = "00시간 00분 00초";
-                        UpdateBlockingUi();
-                        MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
-                        ShowLastSessionReport();
-                        MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
-                        return;
-                    }
-
-                    MessageBox.Show("자유시간이 종료되었습니다. 차단을 다시 시작합니다.");
-                    return;
-                }
-                else
-                {
-                    TimeSpan breakLeft = DataModel.BreakEndTime - DateTime.Now;
-                    lblShowTimeLeft.Text = FormatTimeSpan(DataModel.PausedFocusRemainingTime);
-                    label4.Text = string.Format("자유시간 중입니다. 남은 자유시간: {0}분 {1:D2}초 / 남은 라이프: {2}개",
-                        (int)breakLeft.TotalMinutes,
-                        breakLeft.Seconds,
-                        DataModel.Life);
-                    return;
-                }
-            }
-            else // 자유시간이 아닐 때 (즉, 집중모드 활성화 중)
-            {
-                if (DataModel.SkipNextFocusEndCheck)
-                {
-                    DataModel.SkipNextFocusEndCheck = false;
-                    TimeSpan timeLeftForUI = DataModel.FocusEndTime - DateTime.Now;
-                    lblShowTimeLeft.Text = FormatTimeSpan(timeLeftForUI);
-                blockingtimer.Stop();
-                DataModel.CompleteFocusSession();
-                lblShowTimeLeft.Text = "00시간 00분 00초";
-                UpdateBlockingUi();
-                ShowLastSessionReport();
-                MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 사용할 수 없습니다.");
+                UpdateBreakState();
                 return;
             }
 
-                }
-                else // 정상적인 집중모드 실행 중 (SkipNextFocusEndCheck == false)
-                {
-                    if (DateTime.Now >= DataModel.FocusEndTime)
-                    {
-                        blockingtimer.Stop();
-                        DataModel.CompleteFocusSession();
-                        lblShowTimeLeft.Text = "00시간 00분 00초";
-                        UpdateBlockingUi();
-                        MessageBox.Show("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
-                        return;
-                    }
-
-                    if (DataModel.Life == 0 && DataModel.IsEmergencyLockedOut)
-                    {
-                        blockingtimer.Stop();
-                        DataModel.CompleteFocusSession();
-                        lblShowTimeLeft.Text = "00시간 00분 00초";
-                        UpdateBlockingUi();
-                        MessageBox.Show($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
-                        return;
-                    }
-
-                    TimeSpan timeLeft = DataModel.FocusEndTime - DateTime.Now;
-                    lblShowTimeLeft.Text = FormatTimeSpan(timeLeft);
-                }
-
-                // MODIFIED: finalBlockList 초기화 및 KillProcesses 호출 부분을 이 위치로 옮겨,
-                // SkipNextFocusEndCheck 여부와 관계없이 매 틱마다 실행되도록 합니다.
-                List<string> finalBlockList;
-                // NEW: DataModel.SavedBlockList가 null일 경우를 방어하는 코드 추가
-                if (DataModel.SavedBlockList == null)
-                {
-                    finalBlockList = new List<string>();
-                    Debug.WriteLine("경고: DataModel.SavedBlockList가 null이어서 빈 리스트로 초기화됩니다. 이 상황은 발생해서는 안됩니다.");
-                }
-                else
-                {
-                    finalBlockList = new List<string>(DataModel.SavedBlockList);
-                }
-
-
-                if (!finalBlockList.Contains("taskmgr"))
-                {
-                    finalBlockList.Add("taskmgr");
-                }
-
-                KillProcesses(finalBlockList);
-            List<string> realProcessList = new List<string>();
-
-            foreach (string item in finalBlockList)
+            if (DataModel.SkipNextFocusEndCheck)
             {
-                if (processMapping.ContainsKey(item))
-                {
-                    realProcessList.Add(processMapping[item]);
-                }
+                DataModel.SkipNextFocusEndCheck = false;
+                lblShowTimeLeft.Text = FormatTimeSpan(DataModel.FocusEndTime - DateTime.Now);
+            }
+            else if (DateTime.Now >= DataModel.FocusEndTime)
+            {
+                CompleteCurrentFocusSession("정해진 집중 시간이 끝났습니다! 차단이 해제됩니다.");
+                return;
+            }
+            else if (DataModel.Life == 0 && DataModel.IsEmergencyLockedOut)
+            {
+                CompleteCurrentFocusSession($"라이프를 모두 소진했습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
+                return;
+            }
+            else
+            {
+                lblShowTimeLeft.Text = FormatTimeSpan(DataModel.FocusEndTime - DateTime.Now);
             }
 
-            if (!finalBlockList.Contains("taskmgr"))
-            {
-                finalBlockList.Add("taskmgr");
-            }
-
-
-           KillProcesses(finalBlockList);
-KillWebBrowser(DataModel.SavedWebBlockKeywordList);
-
+            EnforceBlockingRules();
         }
-        public void KillWebBrowser(List<string> keywords)
+
+        private void UpdateBreakState()
         {
-            // 차단 검사를 수행할 타겟 브라우저 프로세스 이름 목록
-            // 창 제목(MainWindowTitle)을 검사하여 차단하기 때문에 안정성을 늘리기 위해 웹 브러우저에 대해서만 차단 알고리즘 실행
-            // ex. 메모장이나 다른 개발 도구 등에 적힌 단어까지 오작동으로 죽이는 경우 피하기 위한 로직
-            string[] browserNames = { "chrome", "msedge", "whale", "firefox" };
+            if (DateTime.Now >= DataModel.BreakEndTime)
+            {
+                DataModel.EndLifeBreak();
+                UpdateBlockingUi();
+                AlertDialog.Show(this, "일시정지가 종료되었습니다. 차단을 다시 시작합니다.");
+                return;
+            }
+
+            TimeSpan breakLeft = DataModel.BreakEndTime - DateTime.Now;
+            lblShowTimeLeft.Text = FormatTimeSpan(DataModel.PausedFocusRemainingTime);
+            label4.Text = FormatPauseStatusText(breakLeft);
+            ApplyFocusPanelVisualState();
+        }
+
+        private void CompleteCurrentFocusSession(string message)
+        {
+            blockingtimer.Stop();
+            DataModel.CompleteFocusSession();
+            lblShowTimeLeft.Text = "00시간 00분 00초";
+            UpdateBlockingUi();
+            ShowLastSessionReport();
+            AlertDialog.Show(this, message);
+        }
+
+        private void EnforceBlockingRules()
+        {
+            KillProcesses(BuildBlockedProcessNames());
+            KillWebBrowser(DataModel.SavedWebBlockKeywordList);
+        }
+
+        private List<string> BuildBlockedProcessNames()
+        {
+            HashSet<string> processNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (DataModel.SavedBlockList != null)
+            {
+                foreach (string item in DataModel.SavedBlockList)
+                {
+                    if (string.IsNullOrWhiteSpace(item))
+                    {
+                        continue;
+                    }
+
+                    if (BlockedProcessAliases.TryGetValue(item, out string processName))
+                    {
+                        processNames.Add(processName);
+                    }
+                    else
+                    {
+                        processNames.Add(item);
+                    }
+                }
+            }
+
+            processNames.Add("taskmgr");
+            return processNames.ToList();
+        }
+
+        private void KillWebBrowser(List<string> keywords)
+        {
+            if (keywords == null)
+            {
+                return;
+            }
+
+            List<string> normalizedKeywords = keywords
+                .Where(keyword => !string.IsNullOrWhiteSpace(keyword))
+                .Select(keyword => keyword.ToLower())
+                .Distinct()
+                .ToList();
+
+            if (normalizedKeywords.Count == 0)
+            {
+                return;
+            }
 
             Process[] allProcesses = Process.GetProcesses();
 
@@ -370,31 +586,17 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             {
                 try
                 {
-                    // p가 브라우저인지 확인
-                    if (browserNames.Contains(p.ProcessName.ToLower()))
+                    if (!BrowserProcessNames.Contains(p.ProcessName) || string.IsNullOrEmpty(p.MainWindowTitle))
                     {
-                        // 활성화된 메인 창이 있고, 창 제목이 비어있지 않은지 검사
-                        if (!string.IsNullOrEmpty(p.MainWindowTitle))
-                        {
-                            string windowTitle = p.MainWindowTitle.ToLower();
+                        continue;
+                    }
 
-                            foreach (string keyword in keywords)
-                            {
-                                // 만약 빈 문자열이 리스트에 들어있다면 무시
-                                if (string.IsNullOrWhiteSpace(keyword)) continue;
+                    string windowTitle = p.MainWindowTitle.ToLower();
 
-                                string lowerKeyword = keyword.ToLower();
-
-                                // 창 제목에 차단 키워드가 포함되어 있는 경우
-                                if (windowTitle.Contains(lowerKeyword))
-                                {
-                                    p.Kill(); // 브라우저 프로세스 강제 종료
-                                    p.WaitForExit(1000); // 완전히 종료될 때까지 최대 1초 대기
-
-                                    break; // 이 프로세스는 이미 죽었으므로 다른 키워드는 더 이상 검사할 필요 없이 탈출
-                                }
-                            }
-                        }
+                    if (normalizedKeywords.Any(keyword => windowTitle.Contains(keyword)))
+                    {
+                        p.Kill();
+                        p.WaitForExit(1000);
                     }
                 }
                 catch (Exception ex)
@@ -417,6 +619,31 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             return string.Format("{0}시간 {1:D2}분 {2:D2}초", (int)timeSpan.TotalHours, timeSpan.Minutes, timeSpan.Seconds);
         }
 
+        private string FormatPauseStatusText(TimeSpan pauseLeft)
+        {
+            if (pauseLeft < TimeSpan.Zero)
+            {
+                pauseLeft = TimeSpan.Zero;
+            }
+
+            return string.Format("일시정지 상태입니다. 재개까지 남은 시간 : {0}분 {1:D2}초 / 남은 라이프: {2}개",
+                (int)pauseLeft.TotalMinutes,
+                pauseLeft.Seconds,
+                DataModel.Life);
+        }
+
+        private void ApplyFocusPanelVisualState()
+        {
+            Color panelColor = DataModel.IsBlockingActive && DataModel.IsBreakActive
+                ? PausePanelBackColor
+                : FocusPanelBackColor;
+
+            guna2Panel1.BackColor = panelColor;
+            guna2Panel1.FillColor = panelColor;
+            label4.BackColor = panelColor;
+            label7.BackColor = panelColor;
+        }
+
         private void btnStopBlocking_Click(object sender, EventArgs e)
         {
             DataModel.CompleteFocusSession();
@@ -429,7 +656,7 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
             ShowLastSessionReport();
-            MessageBox.Show("개발용 정지 버튼으로 차단이 종료되었습니다!");
+            AlertDialog.Show(this, "개발용 정지 버튼으로 차단이 종료되었습니다!");
         }
 
         private void ShowLastSessionReport()
@@ -448,48 +675,124 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            DataModel.LoadFromJson(); // 애플리케이션 시작 시 저장된 데이터 로드
-            LoadBlockProfiles(); // 차단 프로필 로드
             DataModel.LoadFromJson();
             LoadBlockProfiles();
-            for (int i = 0; i <= 23; i++)
-            {
-                cmbHour.Items.Add(i.ToString());
-            }
-            for (int i = 0; i <= 59; i++)
-            {
-                cmbMin.Items.Add(i.ToString());
-            }
 
-            cmbHour.SelectedIndex = 1;
-            cmbMin.SelectedIndex = 30;
-
-            btnActivateBlocking.Enabled = false;
-
-            btnStopBlocking.Text = "집중모드 정지(개발용)";
+            InitializeTimeComboBoxes();
 
             cmbHour.TextChanged += ComboBox_TextChanged;
             cmbMin.TextChanged += ComboBox_TextChanged;
 
-            // 콤보박스에 "00" 및 "0"을 추가하는 로직
-            if (!cmbMin.Items.Contains("00"))
-            {
-                cmbMin.Items.Insert(0, "00");
-            }
-            if (!cmbHour.Items.Contains("0")) // 0시간도 선택 가능하도록 추가
-            {
-                cmbHour.Items.Insert(0, "0");
-            }
-
-
-            // 애플리케이션 시작 시 집중모드가 이미 활성화되어 있었다면 타이머 재시작
             if (DataModel.IsBlockingActive && !blockingtimer.Enabled)
             {
                 blockingtimer.Start();
             }
 
-            UpdateBlockingUi(); // 초기 UI 상태 업데이트
             UpdateBlockingUi();
+        }
+
+        private void InitializeTimeComboBoxes()
+        {
+            cmbHour.Items.Clear();
+            for (int i = 0; i <= 23; i++)
+            {
+                cmbHour.Items.Add(i.ToString());
+            }
+
+            cmbMin.Items.Clear();
+            for (int i = 0; i <= 59; i++)
+            {
+                cmbMin.Items.Add(i.ToString("D2"));
+            }
+
+            cmbHour.SelectedItem = "1";
+            cmbMin.SelectedItem = "00";
+
+            ConfigureTimePickerDropDown(cmbHour);
+            ConfigureTimePickerDropDown(cmbMin);
+        }
+
+        private void ConfigureTimePickerDropDown(ComboBox comboBox)
+        {
+            comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox.IntegralHeight = false;
+            comboBox.MaxDropDownItems = TimePickerDropDownVisibleItems;
+            comboBox.DropDownHeight = comboBox.ItemHeight * TimePickerDropDownVisibleItems;
+        }
+
+        private void SelectTimePickerValue(ComboBox comboBox, string desiredValue, string fallbackValue)
+        {
+            string selectedValue = comboBox.Items.Contains(desiredValue) ? desiredValue : fallbackValue;
+            if (comboBox.Items.Contains(selectedValue))
+            {
+                comboBox.SelectedItem = selectedValue;
+            }
+        }
+
+        private bool TryGetFocusDuration(string hourText, string minuteText, out int totalMinutes, bool showMessage)
+        {
+            totalMinutes = 0;
+
+            if (!TryParseHour(hourText, out int hours))
+            {
+                if (showMessage)
+                {
+                    AlertDialog.Show(this, "시간은 0 이상 23 이하의 숫자로 입력해 주세요.");
+                }
+
+                return false;
+            }
+
+            if (!TryParseMinute(minuteText, out int minutes))
+            {
+                if (showMessage)
+                {
+                    AlertDialog.Show(this, "분은 0 이상 59 이하의 숫자로 입력해 주세요.");
+                }
+
+                return false;
+            }
+
+            totalMinutes = (hours * 60) + minutes;
+            if (totalMinutes <= 0)
+            {
+                if (showMessage)
+                {
+                    AlertDialog.Show(this, "집중 시간은 1분 이상으로 설정해 주세요.");
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryParseHour(string value, out int hours)
+        {
+            return int.TryParse((value ?? string.Empty).Trim(), out hours) &&
+                   hours >= 0 &&
+                   hours <= 23;
+        }
+
+        private bool TryParseMinute(string value, out int minutes)
+        {
+            return int.TryParse((value ?? string.Empty).Trim(), out minutes) &&
+                   minutes >= 0 &&
+                   minutes <= 59;
+        }
+
+        private string NormalizeHourText(string value)
+        {
+            return int.TryParse((value ?? string.Empty).Trim(), out int hours)
+                ? hours.ToString()
+                : "0";
+        }
+
+        private string NormalizeMinuteText(string value)
+        {
+            return int.TryParse((value ?? string.Empty).Trim(), out int minutes)
+                ? minutes.ToString("D2")
+                : "00";
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -497,7 +800,7 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             if (DataModel.IsBlockingActive)
             {
                 e.Cancel = true;
-                MessageBox.Show("집중모드가 실행 중입니다. 종료하려면 먼저 집중모드를 정지해 주세요.");
+                AlertDialog.Show(this, "집중모드가 실행 중입니다. 종료하려면 먼저 집중모드를 정지해 주세요.");
             }
             else
             {
@@ -509,7 +812,7 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
         {
             if (DataModel.Life == 0)
             {
-                MessageBox.Show("남은 라이프가 없습니다. 집중 시간이 끝날 때까지 차단이 유지됩니다.");
+                AlertDialog.Show(this, "남은 라이프가 없습니다. 집중 시간이 끝날 때까지 차단이 유지됩니다.");
                 return;
             }
 
@@ -517,14 +820,14 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
 
             if (action == StopRequestAction.LifeBreak)
             {
-                if (!DataModel.StartLifeBreak()) // 라이프 사용 및 자유시간 시작
+                if (!DataModel.StartLifeBreak()) // 라이프 사용 및 일시정지 시작
                 {
-                    MessageBox.Show("남은 라이프가 없습니다.");
+                    AlertDialog.Show(this, "남은 라이프가 없습니다.");
                     return;
                 }
 
                 UpdateBlockingUi(); // UI 업데이트 (버튼 텍스트 변경 등)
-                MessageBox.Show($"라이프 1개를 사용했습니다. {DataModel.LIFE_BREAK_MINUTES}분 동안 앱 차단이 해제됩니다.");
+                AlertDialog.Show(this, $"일시정지를 시작했습니다. {DataModel.LIFE_BREAK_MINUTES}분 후 집중모드가 재개됩니다.");
             }
             else if (action == StopRequestAction.EmergencyStop)
             {
@@ -544,31 +847,33 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             Button emergencyButton = null;
             Timer countdownTimer = new Timer();
 
+            AlertDialog.ApplyDialogTheme(dialog);
             dialog.Text = "집중모드 정지";
-            dialog.StartPosition = FormStartPosition.CenterParent;
-            dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-            dialog.MaximizeBox = false;
-            dialog.MinimizeBox = false;
             // Life == 0이면 긴급 종료 버튼이 없으므로 다이얼로그 크기를 조절
-            dialog.ClientSize = (DataModel.Life > 0 && DataModel.Life <= 1) ? new Size(460, 215) : new Size(460, 180);
+            dialog.ClientSize = (DataModel.Life > 0 && DataModel.Life <= 1) ? new Size(480, 220) : new Size(480, 185);
 
             descriptionLabel.Location = new Point(18, 18);
-            descriptionLabel.Size = new Size(424, 92);
+            descriptionLabel.Size = new Size(444, 98);
             descriptionLabel.Text = BuildStopDialogMessage(secondsLeft);
+            descriptionLabel.BackColor = AlertDialog.AppBackColor;
+            descriptionLabel.ForeColor = AlertDialog.SubtleTextColor;
+            descriptionLabel.Font = new Font("맑은 고딕", 10F, FontStyle.Regular);
 
             useLifeButton.Location = new Point(18, (DataModel.Life > 0 && DataModel.Life <= 1) ? 130 : 120);
             useLifeButton.Size = new Size(150, 38);
             useLifeButton.Enabled = false;
             useLifeButton.Text = $"대기 중 {secondsLeft}초";
+            AlertDialog.StyleButton(useLifeButton, true);
             useLifeButton.Click += delegate
             {
                 selectedAction = StopRequestAction.LifeBreak;
                 dialog.Close();
             };
 
-            cancelButton.Location = new Point((DataModel.Life > 0 && DataModel.Life <= 1) ? 322 : 292, (DataModel.Life > 0 && DataModel.Life <= 1) ? 130 : 120);
+            cancelButton.Location = new Point((DataModel.Life > 0 && DataModel.Life <= 1) ? 342 : 312, (DataModel.Life > 0 && DataModel.Life <= 1) ? 130 : 120);
             cancelButton.Size = new Size(120, 38);
             cancelButton.Text = "취소";
+            AlertDialog.StyleButton(cancelButton, false, true);
             cancelButton.Click += delegate
             {
                 selectedAction = StopRequestAction.Cancel;
@@ -582,9 +887,10 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             if (DataModel.Life > 0 && DataModel.Life <= 1) // 마지막 라이프가 남았을 때만 긴급 종료 버튼 표시 (Life==1일 때)
             {
                 emergencyButton = new Button();
-                emergencyButton.Location = new Point(174, 130);
+                emergencyButton.Location = new Point(184, 130);
                 emergencyButton.Size = new Size(142, 38);
                 emergencyButton.Text = "긴급 종료";
+                AlertDialog.StyleButton(emergencyButton, false, true);
                 emergencyButton.Click += delegate
                 {
                     selectedAction = StopRequestAction.EmergencyStop;
@@ -602,7 +908,7 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
                 {
                     countdownTimer.Stop();
                     useLifeButton.Enabled = true;
-                    useLifeButton.Text = $"{DataModel.LIFE_BREAK_MINUTES}분 사용";
+                    useLifeButton.Text = $"{DataModel.LIFE_BREAK_MINUTES}분 일시정지";
                     descriptionLabel.Text = BuildStopDialogMessage(0);
                     return;
                 }
@@ -629,16 +935,16 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
 
         private string BuildStopDialogMessage(int secondsLeft)
         {
-            string message = $"라이프 1개를 사용하면 {DataModel.LIFE_BREAK_MINUTES}분 동안 앱 차단이 해제됩니다.\r\n" +
+            string message = $"라이프 1개를 사용하면 {DataModel.LIFE_BREAK_MINUTES}분 동안 집중모드가 일시정지됩니다.\r\n" +
                              $"오늘 남은 라이프: {DataModel.Life}개\r\n";
 
             if (secondsLeft > 0)
             {
-                message += $"충동적인 해제를 막기 위해 {secondsLeft}초 후 사용할 수 있습니다.";
+                message += "정말 해제하시겠습니까?";
             }
             else
             {
-                message += "이제 라이프를 사용할 수 있습니다.";
+                message += "정말 해제하시겠습니까?\r\n이제 라이프를 사용할 수 있습니다.";
             }
 
             // 마지막 라이프가 1개일 때만 "마지막 라이프입니다" 메시지 추가
@@ -652,7 +958,8 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
 
         private void ConfirmEmergencyStop()
         {
-            DialogResult result = MessageBox.Show(
+            DialogResult result = AlertDialog.Show(
+                this,
                 "긴급 종료 시 현재 집중세션이 완전히 해제됩니다.\r\n이후 남은 시간 동안 이 앱에서 집중모드를 다시 사용할 수 없습니다.\r\n그래도 긴급 종료하시겠습니까?",
                 "긴급 종료 확인",
                 MessageBoxButtons.OKCancel,
@@ -665,7 +972,7 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
 
             if (!DataModel.EmergencyStopFocusSession()) // EmergencyStopFocusSession()은 이제 Life 감소 로직을 포함
             {
-                MessageBox.Show("남은 라이프가 없습니다."); // 이 경우는 발생하지 않을 것으로 예상 (HandleFocusStopRequest에서 Life==0이면 이미 차단)
+                AlertDialog.Show(this, "남은 라이프가 없습니다."); // 이 경우는 발생하지 않을 것으로 예상 (HandleFocusStopRequest에서 Life==0이면 이미 차단)
                 return;
             }
 
@@ -677,7 +984,7 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             lblShowTimeLeft.Text = "00시간 00분 00초";
             UpdateBlockingUi();
             ShowLastSessionReport();
-            MessageBox.Show($"긴급 종료되었습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
+            AlertDialog.Show(this, $"긴급 종료되었습니다. {DataModel.EmergencyLockUntil:yyyy-MM-dd HH:mm}까지 집중모드를 다시 시작할 수 없습니다.");
         }
 
         private void ComboBox_TextChanged(object sender, EventArgs e)
@@ -690,14 +997,14 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             btnStopBlocking.Text = "집중모드 정지(개발용)";
             cmbHour.Enabled = !DataModel.IsBlockingActive;
             cmbMin.Enabled = !DataModel.IsBlockingActive;
+            ApplyFocusPanelVisualState();
 
             if (DataModel.IsBlockingActive)
             {
                 if (DataModel.IsBreakActive)
                 {
-                    btnActivateBlocking.Text = "집중모드 재개"; // 변경: 자유시간 중에는 '집중모드 재개'
-                    // 자유시간 중에는 타이머 설정 콤보박스도 비활성화되어야 함 (이미 위에서 처리)
-                    // label4에 자유시간 관련 메시지 출력은 timer_Tick에서 처리
+                    btnActivateBlocking.Text = "집중모드 재개";
+                    label4.Text = FormatPauseStatusText(DataModel.BreakEndTime - DateTime.Now);
                 }
                 else
                 {
@@ -734,44 +1041,13 @@ KillWebBrowser(DataModel.SavedWebBlockKeywordList);
             bool hasHour = !string.IsNullOrWhiteSpace(cmbHour.Text);
             bool hasMin = !string.IsNullOrWhiteSpace(cmbMin.Text);
 
-            int minutes;
-            bool isMinValid = false;
-            if (!string.IsNullOrEmpty(cmbMin.Text))
-            {
-                if (cmbMin.Text == "00")
-                {
-                    isMinValid = true;
-                }
-                else if (int.TryParse(cmbMin.Text, out minutes) && minutes >= 0 && minutes < 60)
-                {
-                    isMinValid = true;
-                }
-            }
-
-            btnActivateBlocking.Enabled = hasHour && isMinValid && !DataModel.IsEmergencyLockedOut;
+            bool isDurationValid = hasHour && hasMin && TryGetFocusDuration(cmbHour.Text, cmbMin.Text, out _, false);
+            btnActivateBlocking.Enabled = isDurationValid && !DataModel.IsEmergencyLockedOut;
         }
 
         public void SetCurrentCategory(string category)
         {
-            currentActiveCategory = category;
-
-            label7.Text =
-                $"현재 모드 : {currentActiveCategory}";
-        }
-
-        private void label5_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void lblShowTimeLeft_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void guna2Panel2_Paint(object sender, PaintEventArgs e)
-        {
-
+            label7.Text = $"현재 모드 : {category}";
         }
     }
 }
