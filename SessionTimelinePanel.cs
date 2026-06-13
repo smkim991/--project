@@ -70,8 +70,8 @@ namespace Prototype1.UI
             using (Pen gridPen = new Pen(Color.FromArgb(220, 224, 230)))
             using (Pen axisPen = new Pen(Color.FromArgb(130, 140, 150)))
             using (Brush textBrush = new SolidBrush(Color.FromArgb(45, 52, 60)))
-            using (Font smallFont = new Font(Font.FontFamily, 8.5F))
-            using (Font rowFont = new Font(Font.FontFamily, 9F))
+            using (Font smallFont = new Font("맑은 고딕", 8.5F))
+            using (Font rowFont = new Font("맑은 고딕", 9F))
             {
                 g.DrawString(day.ToString("yyyy-MM-dd") + " 세션 타임라인", Font, textBrush, 12, 10);
 

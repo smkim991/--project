@@ -112,21 +112,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataModel.cs" />
-
-    <Compile Include="CategorySettingsForm2.cs">
-  <SubType>Form</SubType>
-</Compile>
-
-<Compile Include="CategorySettingsForm2.Designer.cs">
-  <DependentUpon>CategorySettingsForm2.cs</DependentUpon>
-</Compile>
-
-<Compile Include="FocusSessionReportForm.cs">
-  <SubType>Form</SubType>
-</Compile>
-
-<Compile Include="FocusSessionTracking.cs" />
-
+    <Compile Include="AlertDialog.cs" />
+    <Compile Include="CategorySettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CategorySettingsForm.Designer.cs">
+      <DependentUpon>CategorySettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FocusSessionReportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FocusSessionTracking.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -148,14 +144,22 @@
     <Compile Include="..\StudyPlanForm.Dashboard.cs">
       <Link>UI-branch\StudyPlanForm.Dashboard.cs</Link>
       <DependentUpon>StudyPlanForm.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="..\StudyPlanForm.Files.cs">
       <Link>UI-branch\StudyPlanForm.Files.cs</Link>
       <DependentUpon>StudyPlanForm.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="..\StudyPlanForm.FocusPlan.cs">
       <Link>UI-branch\StudyPlanForm.FocusPlan.cs</Link>
       <DependentUpon>StudyPlanForm.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\StudyPlanForm.Markdown.cs">
+      <Link>UI-branch\StudyPlanForm.Markdown.cs</Link>
+      <DependentUpon>StudyPlanForm.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="..\StudyPlanForm.Designer.cs">
       <Link>UI-branch\StudyPlanForm.Designer.cs</Link>
@@ -163,6 +167,7 @@
     </Compile>
     <Compile Include="..\SessionTimelinePanel.cs">
       <Link>UI-branch\SessionTimelinePanel.cs</Link>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="..\FocusReasonForm.cs">
       <Link>UI-branch\FocusReasonForm.cs</Link>
@@ -172,25 +177,10 @@
       <Link>UI-branch\FocusReasonForm.Designer.cs</Link>
       <DependentUpon>FocusReasonForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="..\CategorySettingsForm.cs">
-      <Link>UI-branch\CategorySettingsForm.cs</Link>
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="..\CategorySettingsForm.Designer.cs">
-      <Link>UI-branch\CategorySettingsForm.Designer.cs</Link>
-      <DependentUpon>CategorySettingsForm.cs</DependentUpon>
-    <Compile Include="..\FocusSetupPendingForm.cs">
-      <Link>UI-branch\FocusSetupPendingForm.cs</Link>
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="..\FocusSetupPendingForm.Designer.cs">
-      <Link>UI-branch\FocusSetupPendingForm.Designer.cs</Link>
-      <DependentUpon>FocusSetupPendingForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="CategorySettingsForm2.resx">
-      <DependentUpon>CategorySettingsForm2.cs</DependentUpon>
+    <EmbeddedResource Include="CategorySettingsForm.resx">
+      <DependentUpon>CategorySettingsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -218,6 +208,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="Assets\study-file-create.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\study-folder-create.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\study-filter.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

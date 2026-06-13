@@ -201,7 +201,7 @@ namespace Prototype1.UI
             FocusSessionRecord selected = GetSelectedSession();
             if (selected == null)
             {
-                MessageBox.Show("선택된 세션이 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AlertDialog.Show(this, "선택된 세션이 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 

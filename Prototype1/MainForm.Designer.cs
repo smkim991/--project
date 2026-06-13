@@ -29,10 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.btnCategorySettings = new System.Windows.Forms.Button();
-            this.btnManageBlockedApps = new System.Windows.Forms.Button();
-            this.btnStudyPlan = new System.Windows.Forms.Button();
-            this.btnActivateBlocking = new System.Windows.Forms.Button();
             this.btnStopBlocking = new System.Windows.Forms.Button();
             this.blockingtimer = new System.Windows.Forms.Timer(this.components);
             this.label1 = new System.Windows.Forms.Label();
@@ -46,7 +42,6 @@
             this.cmbMin = new Guna.UI2.WinForms.Guna2ComboBox();
             this.cmbHour = new Guna.UI2.WinForms.Guna2ComboBox();
             this.guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
-            this.btnExit = new Guna.UI2.WinForms.Guna2Button();
             this.btnStudyPlan = new Guna.UI2.WinForms.Guna2Button();
             this.btnManageBlockedApps = new Guna.UI2.WinForms.Guna2Button();
             this.btnCategorySettings = new Guna.UI2.WinForms.Guna2Button();
@@ -60,62 +55,19 @@
             this.guna2Panel3.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btnCategorySettings
-            // 
-            this.btnCategorySettings.Location = new System.Drawing.Point(538, 52);
-            this.btnCategorySettings.Margin = new System.Windows.Forms.Padding(2);
-            this.btnCategorySettings.Name = "btnCategorySettings";
-            this.btnCategorySettings.Size = new System.Drawing.Size(148, 53);
-            this.btnCategorySettings.TabIndex = 1;
-            this.btnCategorySettings.Text = "카테고리 설정";
-            this.btnCategorySettings.UseVisualStyleBackColor = true;
-            this.btnCategorySettings.Click += new System.EventHandler(this.btnCategorySettings_Click);
-            // 
-            // btnManageBlockedApps
-            // 
-            this.btnManageBlockedApps.Location = new System.Drawing.Point(538, 112);
-            this.btnManageBlockedApps.Margin = new System.Windows.Forms.Padding(2);
-            this.btnManageBlockedApps.Name = "btnManageBlockedApps";
-            this.btnManageBlockedApps.Size = new System.Drawing.Size(148, 53);
-            this.btnManageBlockedApps.TabIndex = 12;
-            this.btnManageBlockedApps.Text = "차단 앱 관리";
-            this.btnManageBlockedApps.UseVisualStyleBackColor = true;
-            this.btnManageBlockedApps.Click += new System.EventHandler(this.btnManageBlockedApps_Click);
-            // 
-            // btnStudyPlan
-            // 
-            this.btnStudyPlan.Location = new System.Drawing.Point(538, 172);
-            this.btnStudyPlan.Margin = new System.Windows.Forms.Padding(2);
-            this.btnStudyPlan.Name = "btnStudyPlan";
-            this.btnStudyPlan.Size = new System.Drawing.Size(148, 53);
-            this.btnStudyPlan.TabIndex = 13;
-            this.btnStudyPlan.Text = "학습 계획 및 관리";
-            this.btnStudyPlan.UseVisualStyleBackColor = true;
-            this.btnStudyPlan.Click += new System.EventHandler(this.btnStudyPlan_Click);
-            // 
-            // btnActivateBlocking
-            // 
-            this.btnActivateBlocking.Location = new System.Drawing.Point(23, 287);
-            this.btnActivateBlocking.Margin = new System.Windows.Forms.Padding(2);
-            this.btnActivateBlocking.Name = "btnActivateBlocking";
-            this.btnActivateBlocking.Size = new System.Drawing.Size(328, 99);
-            this.btnActivateBlocking.TabIndex = 3;
-            this.btnActivateBlocking.Text = "집중모드 활성화";
-            this.btnActivateBlocking.UseVisualStyleBackColor = true;
-            this.btnActivateBlocking.Click += new System.EventHandler(this.btnActivateBlocking_Click);
-            // 
             // btnStopBlocking
             // 
-            this.btnStopBlocking.Location = new System.Drawing.Point(538, 232);
-            this.btnStopBlocking.Margin = new System.Windows.Forms.Padding(2);
-            // btnStopBlocking
-            // 
-            this.btnStopBlocking.Location = new System.Drawing.Point(1153, 741);
+            this.btnStopBlocking.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(35)))));
+            this.btnStopBlocking.FlatAppearance.BorderSize = 0;
+            this.btnStopBlocking.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnStopBlocking.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
+            this.btnStopBlocking.ForeColor = System.Drawing.Color.White;
+            this.btnStopBlocking.Location = new System.Drawing.Point(1122, 741);
             this.btnStopBlocking.Name = "btnStopBlocking";
-            this.btnStopBlocking.Size = new System.Drawing.Size(148, 53);
+            this.btnStopBlocking.Size = new System.Drawing.Size(180, 53);
             this.btnStopBlocking.TabIndex = 4;
             this.btnStopBlocking.Text = "집중모드 정지(개발용)";
-            this.btnStopBlocking.UseVisualStyleBackColor = true;
+            this.btnStopBlocking.UseVisualStyleBackColor = false;
             this.btnStopBlocking.Click += new System.EventHandler(this.btnStopBlocking_Click);
             // 
             // blockingtimer
@@ -126,8 +78,6 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 193);
-            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.ForeColor = System.Drawing.Color.White;
             this.label1.Location = new System.Drawing.Point(74, 259);
             this.label1.Name = "label1";
@@ -138,8 +88,6 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(191, 193);
-            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.ForeColor = System.Drawing.Color.White;
             this.label2.Location = new System.Drawing.Point(376, 261);
             this.label2.Name = "label2";
@@ -150,8 +98,6 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(325, 193);
-            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.ForeColor = System.Drawing.Color.White;
             this.label3.Location = new System.Drawing.Point(623, 257);
             this.label3.Name = "label3";
@@ -159,47 +105,9 @@
             this.label3.TabIndex = 7;
             this.label3.Text = "분";
             // 
-
-            // cmbHour
-            // 
-            this.cmbHour.FormattingEnabled = true;
-            this.cmbHour.Items.AddRange(new object[] {
-            "0",
-            "1",
-            "2",
-            "3",
-            "4"});
-            this.cmbHour.Location = new System.Drawing.Point(114, 190);
-            this.cmbHour.Margin = new System.Windows.Forms.Padding(2);
-            this.cmbHour.Name = "cmbHour";
-            this.cmbHour.Size = new System.Drawing.Size(62, 26);
-            this.cmbHour.TabIndex = 8;
-
-            // cmbMin
-            // 
-            this.cmbMin.FormattingEnabled = true;
-            this.cmbMin.Items.AddRange(new object[] {
-            "00",
-            "0",
-            "10",
-            "20",
-            "30",
-            "40",
-            "50"});
-            this.cmbMin.Location = new System.Drawing.Point(240, 190);
-            this.cmbMin.Margin = new System.Windows.Forms.Padding(2);
-            this.cmbMin.Name = "cmbMin";
-            this.cmbMin.Size = new System.Drawing.Size(62, 26);
-            this.cmbMin.TabIndex = 9;
-
             // lblShowTimeLeft
             // 
             this.lblShowTimeLeft.AutoSize = true;
-            this.lblShowTimeLeft.Font = new System.Drawing.Font("굴림", 22F);
-            this.lblShowTimeLeft.Location = new System.Drawing.Point(76, 64);
-            this.lblShowTimeLeft.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.lblShowTimeLeft.Name = "lblShowTimeLeft";
-            this.lblShowTimeLeft.Size = new System.Drawing.Size(375, 44);
             this.lblShowTimeLeft.Font = new System.Drawing.Font("맑은 고딕", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.lblShowTimeLeft.ForeColor = System.Drawing.Color.White;
             this.lblShowTimeLeft.Location = new System.Drawing.Point(11, 39);
@@ -208,25 +116,26 @@
             this.lblShowTimeLeft.TabIndex = 10;
             this.lblShowTimeLeft.Text = "00시간 00분 00초";
             this.lblShowTimeLeft.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lblShowTimeLeft.Click += new System.EventHandler(this.lblShowTimeLeft_Click);
             // 
             // label4
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(9, 15);
-            this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label4.AutoSize = false;
+            this.label4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
+            this.label4.Font = new System.Drawing.Font("맑은 고딕", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.label4.ForeColor = System.Drawing.Color.White;
-            this.label4.Location = new System.Drawing.Point(646, 833);
+            this.label4.Location = new System.Drawing.Point(34, 178);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(536, 18);
+            this.label4.Size = new System.Drawing.Size(788, 34);
             this.label4.TabIndex = 11;
-            this.label4.Text = "집중모드 정지버튼은 개발 편의성을 위해서 일단 남겨두겠습니다.";
+            this.label4.Text = "오늘 남은 라이프: 3개";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // guna2Panel1
             // 
             this.guna2Panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
             this.guna2Panel1.BorderRadius = 25;
             this.guna2Panel1.Controls.Add(this.label7);
+            this.guna2Panel1.Controls.Add(this.label4);
             this.guna2Panel1.Controls.Add(this.btnActivateBlocking);
             this.guna2Panel1.Controls.Add(this.cmbMin);
             this.guna2Panel1.Controls.Add(this.cmbHour);
@@ -244,7 +153,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("맑은 고딕", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.label7.ForeColor = System.Drawing.Color.White;
-            this.label7.Location = new System.Drawing.Point(315, 184);
+            this.label7.Location = new System.Drawing.Point(315, 219);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(212, 37);
             this.label7.TabIndex = 14;
@@ -278,7 +187,7 @@
             this.cmbMin.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(35)))));
             this.cmbMin.FocusedColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
             this.cmbMin.FocusedState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
-            this.cmbMin.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbMin.Font = new System.Drawing.Font("맑은 고딕", 10F);
             this.cmbMin.ForeColor = System.Drawing.Color.White;
             this.cmbMin.ItemHeight = 30;
             this.cmbMin.Location = new System.Drawing.Point(464, 250);
@@ -296,7 +205,7 @@
             this.cmbHour.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(35)))));
             this.cmbHour.FocusedColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
             this.cmbHour.FocusedState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
-            this.cmbHour.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbHour.Font = new System.Drawing.Font("맑은 고딕", 10F);
             this.cmbHour.ForeColor = System.Drawing.Color.White;
             this.cmbHour.ItemHeight = 30;
             this.cmbHour.Location = new System.Drawing.Point(222, 249);
@@ -307,7 +216,6 @@
             // guna2Panel2
             // 
             this.guna2Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
-            this.guna2Panel2.Controls.Add(this.btnExit);
             this.guna2Panel2.Controls.Add(this.btnStudyPlan);
             this.guna2Panel2.Controls.Add(this.btnManageBlockedApps);
             this.guna2Panel2.Controls.Add(this.btnCategorySettings);
@@ -317,28 +225,6 @@
             this.guna2Panel2.Name = "guna2Panel2";
             this.guna2Panel2.Size = new System.Drawing.Size(279, 900);
             this.guna2Panel2.TabIndex = 16;
-            this.guna2Panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.guna2Panel2_Paint);
-            // 
-            // btnExit
-            // 
-            this.btnExit.ButtonMode = Guna.UI2.WinForms.Enums.ButtonMode.RadioButton;
-            this.btnExit.CheckedState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(139)))), ((int)(((byte)(92)))), ((int)(((byte)(246)))));
-            this.btnExit.DisabledState.BorderColor = System.Drawing.Color.DarkGray;
-            this.btnExit.DisabledState.CustomBorderColor = System.Drawing.Color.DarkGray;
-            this.btnExit.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
-            this.btnExit.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
-            this.btnExit.FillColor = System.Drawing.Color.Transparent;
-            this.btnExit.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.btnExit.ForeColor = System.Drawing.Color.White;
-            this.btnExit.HoverState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
-            this.btnExit.ImageAlign = System.Windows.Forms.HorizontalAlignment.Left;
-            this.btnExit.Location = new System.Drawing.Point(33, 812);
-            this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new System.Drawing.Size(180, 45);
-            this.btnExit.TabIndex = 18;
-            this.btnExit.Text = "Exit";
-            this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
-            // 
             // btnStudyPlan
             // 
             this.btnStudyPlan.BorderRadius = 10;
@@ -349,7 +235,7 @@
             this.btnStudyPlan.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
             this.btnStudyPlan.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
             this.btnStudyPlan.FillColor = System.Drawing.Color.Transparent;
-            this.btnStudyPlan.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.btnStudyPlan.Font = new System.Drawing.Font("맑은 고딕", 9F);
             this.btnStudyPlan.ForeColor = System.Drawing.Color.White;
             this.btnStudyPlan.HoverState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
             this.btnStudyPlan.ImageAlign = System.Windows.Forms.HorizontalAlignment.Left;
@@ -371,7 +257,7 @@
             this.btnManageBlockedApps.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
             this.btnManageBlockedApps.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
             this.btnManageBlockedApps.FillColor = System.Drawing.Color.Transparent;
-            this.btnManageBlockedApps.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.btnManageBlockedApps.Font = new System.Drawing.Font("맑은 고딕", 9F);
             this.btnManageBlockedApps.ForeColor = System.Drawing.Color.White;
             this.btnManageBlockedApps.HoverState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
             this.btnManageBlockedApps.ImageAlign = System.Windows.Forms.HorizontalAlignment.Left;
@@ -393,7 +279,7 @@
             this.btnCategorySettings.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
             this.btnCategorySettings.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
             this.btnCategorySettings.FillColor = System.Drawing.Color.Transparent;
-            this.btnCategorySettings.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.btnCategorySettings.Font = new System.Drawing.Font("맑은 고딕", 9F);
             this.btnCategorySettings.ForeColor = System.Drawing.Color.White;
             this.btnCategorySettings.HoverState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
             this.btnCategorySettings.ImageAlign = System.Windows.Forms.HorizontalAlignment.Left;
@@ -415,12 +301,10 @@
             this.label5.Size = new System.Drawing.Size(206, 40);
             this.label5.TabIndex = 14;
             this.label5.Text = "Focus Blocker";
-            this.label5.Click += new System.EventHandler(this.label5_Click);
             // 
             // guna2Panel3
             // 
             this.guna2Panel3.Controls.Add(this.guna2ControlBox1);
-            this.guna2Panel3.Controls.Add(this.label6);
             this.guna2Panel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.guna2Panel3.Location = new System.Drawing.Point(279, 0);
             this.guna2Panel3.Name = "guna2Panel3";
@@ -448,7 +332,7 @@
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(172, 32);
             this.label6.TabIndex = 0;
-            this.label6.Text = "Focus Blocker";
+            this.label6.Text = "";
             // 
             // guna2DragControl1
             // 
@@ -460,19 +344,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(715, 404);
-            this.Controls.Add(this.btnStudyPlan);
-            this.Controls.Add(this.btnManageBlockedApps);
-            this.Controls.Add(this.btnCategorySettings);
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(18)))), ((int)(((byte)(18)))), ((int)(((byte)(18)))));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1400, 900);
             this.Controls.Add(this.guna2Panel3);
             this.Controls.Add(this.guna2Panel2);
             this.Controls.Add(this.guna2Panel1);
-            this.Controls.Add(this.label4);
             this.Controls.Add(this.btnStopBlocking);
-            this.Controls.Add(this.btnActivateBlocking);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "MainForm";
@@ -487,15 +365,10 @@
             this.guna2Panel3.ResumeLayout(false);
             this.guna2Panel3.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-        private System.Windows.Forms.Button btnCategorySettings;
-        private System.Windows.Forms.Button btnManageBlockedApps;
-        private System.Windows.Forms.Button btnStudyPlan;
-        private System.Windows.Forms.Button btnActivateBlocking;
         private System.Windows.Forms.Button btnStopBlocking;
         private System.Windows.Forms.Timer blockingtimer;
         private System.Windows.Forms.Label label1;
@@ -512,7 +385,6 @@
         private Guna.UI2.WinForms.Guna2Button btnCategorySettings;
         private Guna.UI2.WinForms.Guna2Button btnManageBlockedApps;
         private Guna.UI2.WinForms.Guna2Button btnStudyPlan;
-        private Guna.UI2.WinForms.Guna2Button btnExit;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel3;
         private Guna.UI2.WinForms.Guna2ControlBox guna2ControlBox1;
         private System.Windows.Forms.Label label6;
