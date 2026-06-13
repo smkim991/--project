@@ -1,6 +1,6 @@
 ﻿namespace Prototype1.UI
 {
-    partial class CategorySettingsForm2
+    partial class CategorySettingsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -51,7 +51,6 @@
             this.lblBlockedItemsDisplay.Size = new System.Drawing.Size(297, 37);
             this.lblBlockedItemsDisplay.TabIndex = 5;
             this.lblBlockedItemsDisplay.Text = "lblBlockedItemsDisplay";
-            this.lblBlockedItemsDisplay.Click += new System.EventHandler(this.lblBlockedItemsDisplay_Click);
             // 
             // btnConfirmSelection
             // 
@@ -191,7 +190,7 @@
             this.guna2ControlBox1.Size = new System.Drawing.Size(81, 38);
             this.guna2ControlBox1.TabIndex = 15;
             // 
-            // CategorySettingsForm2
+            // CategorySettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -206,8 +205,8 @@
             this.Controls.Add(this.guna2Panel1);
             this.Controls.Add(this.lblBlockedItemsDisplay);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Name = "CategorySettingsForm2";
-            this.Text = "CategorySettingsForm2";
+            this.Name = "CategorySettingsForm";
+            this.Text = "CategorySettingsForm";
             this.guna2Panel1.ResumeLayout(false);
             this.guna2Panel1.PerformLayout();
             this.ResumeLayout(false);
